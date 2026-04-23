@@ -1,66 +1,111 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [activeArt, setActiveArt] = useState(null);
+  const [active, setActive] = useState(null);
+  const [phoneIndex, setPhoneIndex] = useState(0);
 
-  const artworks = [
-    {
-      id: "painting1",
+  const phoneImages = [
+    "/art/painting1.jpg",
+    "/art/easel.jpg",
+    "/art/sketch1.jpg"
+  ];
+
+  const artworks = {
+    painting: {
       title: "Untitled I",
       image: "/art/painting1.jpg",
       audio: "/audio/painting1.mp3",
     },
-    {
-      id: "easel",
+    easel: {
       title: "Work in Progress",
       image: "/art/easel.jpg",
       audio: "/audio/easel.mp3",
     },
-  ];
+    sketchbook: {
+      title: "Sketchbook",
+      images: [
+        "/art/sketch1.jpg",
+        "/art/painting1.jpg"
+      ]
+    },
+    phone: {
+      title: "Phone"
+    }
+  };
 
   return (
     <div style={styles.container}>
-      
-      {/* 🏡 STUDIO BACKGROUND */}
-      <img
-        src="/studio.jpg"
-        alt="Liz Studio"
-        style={styles.background}
+
+      {/* ROOM */}
+      <img src="/studio.jpg" style={styles.bg} />
+
+      {/* PAINTING */}
+      <div style={{ ...styles.hotspot, top: "30%", left: "20%" }}
+        onClick={() => setActive("painting")}
       />
 
-      {/* 🎯 HOTSPOTS */}
-
-      {/* Wall Painting */}
-      <div
-        style={{ ...styles.hotspot, top: "30%", left: "20%" }}
-        onClick={() => setActiveArt(artworks[0])}
+      {/* EASEL */}
+      <div style={{ ...styles.hotspot, top: "50%", left: "60%" }}
+        onClick={() => setActive("easel")}
       />
 
-      {/* Easel */}
-      <div
-        style={{ ...styles.hotspot, top: "50%", left: "60%" }}
-        onClick={() => setActiveArt(artworks[1])}
+      {/* SKETCHBOOK */}
+      <div style={{ ...styles.hotspot, top: "70%", left: "40%" }}
+        onClick={() => setActive("sketchbook")}
       />
 
-      {/* 📦 MODAL */}
-      {activeArt && (
-        <div style={styles.modal} onClick={() => setActiveArt(null)}>
-          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            
-            <h2>{activeArt.title}</h2>
+      {/* PHONE */}
+      <div style={{ ...styles.hotspot, top: "65%", left: "75%" }}
+        onClick={() => setActive("phone")}
+      />
 
-            <img
-              src={activeArt.image}
-              style={{ width: "100%", borderRadius: "8px" }}
-            />
+      {/* MODAL */}
+      {active && (
+        <div style={styles.modal} onClick={() => setActive(null)}>
+          <div style={styles.card} onClick={(e) => e.stopPropagation()}>
 
-            <audio controls autoPlay style={{ marginTop: "10px", width: "100%" }}>
-              <source src={activeArt.audio} type="audio/mpeg" />
-            </audio>
+            <h2>{artworks[active].title}</h2>
 
-            <button style={styles.button}>
-              this one is still here
-            </button>
+            {/* NORMAL ART */}
+            {active === "painting" || active === "easel" ? (
+              <>
+                <img src={artworks[active].image} style={styles.image} />
+
+                <audio controls autoPlay style={{ width: "100%" }}>
+                  <source src={artworks[active].audio} />
+                </audio>
+
+                <button style={styles.btn}>
+                  this one is still here
+                </button>
+              </>
+            ) : null}
+
+            {/* SKETCHBOOK */}
+            {active === "sketchbook" && (
+              <div style={{ display: "flex", gap: "10px", overflowX: "auto" }}>
+                {artworks.sketchbook.images.map((img, i) => (
+                  <img key={i} src={img} style={styles.thumb} />
+                ))}
+              </div>
+            )}
+
+            {/* PHONE */}
+            {active === "phone" && (
+              <div style={{ textAlign: "center" }}>
+                <img src={phoneImages[phoneIndex]} style={styles.image} />
+
+                <button
+                  style={styles.btn}
+                  onClick={() =>
+                    setPhoneIndex((phoneIndex + 1) % phoneImages.length)
+                  }
+                >
+                  tap screen
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       )}
@@ -70,49 +115,52 @@ export default function Home() {
 
 const styles = {
   container: {
-    position: "relative",
     width: "100vw",
     height: "100vh",
-    overflow: "hidden",
+    position: "relative",
+    overflow: "hidden"
   },
-  background: {
+  bg: {
     width: "100%",
     height: "100%",
-    objectFit: "cover",
+    objectFit: "cover"
   },
   hotspot: {
     position: "absolute",
-    width: "80px",
-    height: "80px",
-    cursor: "pointer",
-    backgroundColor: "rgba(255,255,255,0.0)",
+    width: "90px",
+    height: "90px",
+    cursor: "pointer"
   },
   modal: {
     position: "fixed",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundColor: "rgba(0,0,0,0.8)",
+    inset: 0,
+    background: "rgba(0,0,0,0.85)",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "center"
   },
-  modalContent: {
+  card: {
     background: "#111",
     padding: "20px",
     borderRadius: "10px",
     width: "90%",
     maxWidth: "500px",
-    color: "#fff",
+    color: "#fff"
   },
-  button: {
-    marginTop: "10px",
-    padding: "10px",
+  image: {
     width: "100%",
+    marginBottom: "10px"
+  },
+  thumb: {
+    width: "120px"
+  },
+  btn: {
+    marginTop: "10px",
+    width: "100%",
+    padding: "10px",
     background: "#222",
     color: "#fff",
     border: "none",
-    cursor: "pointer",
-  },
+    cursor: "pointer"
+  }
 };
