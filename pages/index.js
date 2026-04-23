@@ -1,8 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
+
+// ❗ prevents SSR crash on mobile/Next
+const Canvas = dynamic(
+  () => import("@react-three/fiber").then((mod) => mod.Canvas),
+  { ssr: false }
+);
+
+import { OrbitControls } from "@react-three/drei";
 
 export default function Home() {
   const [active, setActive] = useState(null);
-  const containerRef = useRef(null);
 
   const artworks = {
     painting: {
@@ -17,58 +25,28 @@ export default function Home() {
     },
   };
 
-  // 🌀 CAMERA MOVEMENT
-  useEffect(() => {
-    const handleMove = (x, y) => {
-      const moveX = (x - window.innerWidth / 2) / 40;
-      const moveY = (y - window.innerHeight / 2) / 40;
-
-      if (containerRef.current) {
-        containerRef.current.style.transform =
-          `scale(1.05) translate(${-moveX}px, ${-moveY}px)`;
-      }
-    };
-
-    const mouseMove = (e) => handleMove(e.clientX, e.clientY);
-    const touchMove = (e) => {
-      const touch = e.touches[0];
-      handleMove(touch.clientX, touch.clientY);
-    };
-
-    window.addEventListener("mousemove", mouseMove);
-    window.addEventListener("touchmove", touchMove);
-
-    return () => {
-      window.removeEventListener("mousemove", mouseMove);
-      window.removeEventListener("touchmove", touchMove);
-    };
-  }, []);
-
   return (
-    <div style={styles.container}>
+    <div style={{ width: "100vw", height: "100vh" }}>
+      <Canvas camera={{ position: [0, 1.5, 4], fov: 60 }}>
+        <ambientLight intensity={0.8} />
+        <directionalLight position={[5, 5, 5]} intensity={1} />
 
-      {/* 🏡 MOVING ROOM */}
-      <div ref={containerRef} style={styles.room}>
-        <img src="/studio.jpg" style={styles.bg} />
+        <Suspense fallback={null}>
+          <Scene setActive={setActive} />
+        </Suspense>
 
-        {/* PAINTING */}
-        <div
-          style={{ ...styles.hotspot, top: "30%", left: "25%" }}
-          onClick={() => setActive("painting")}
+        <OrbitControls
+          enableZoom={false}
+          enablePan={false}
+          maxPolarAngle={Math.PI / 2}
+          minPolarAngle={Math.PI / 3}
         />
-
-        {/* EASEL */}
-        <div
-          style={{ ...styles.hotspot, top: "55%", left: "60%" }}
-          onClick={() => setActive("easel")}
-        />
-      </div>
+      </Canvas>
 
       {/* MODAL */}
       {active && (
         <div style={styles.modal} onClick={() => setActive(null)}>
           <div style={styles.card} onClick={(e) => e.stopPropagation()}>
-
             <h2>{artworks[active].title}</h2>
 
             <img src={artworks[active].image} style={styles.image} />
@@ -80,7 +58,6 @@ export default function Home() {
             <button style={styles.btn}>
               this one is still here
             </button>
-
           </div>
         </div>
       )}
@@ -88,32 +65,61 @@ export default function Home() {
   );
 }
 
+/* 🏡 3D SCENE */
+function Scene({ setActive }) {
+  return (
+    <>
+      {/* FLOOR */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+        <planeGeometry args={[10, 10]} />
+        <meshStandardMaterial color="#2a2a2a" />
+      </mesh>
+
+      {/* BACK WALL */}
+      <mesh position={[0, 2.5, -3]}>
+        <planeGeometry args={[10, 5]} />
+        <meshStandardMaterial color="#3a2f2a" />
+      </mesh>
+
+      {/* PAINTING */}
+      <ClickableArt
+        position={[-1.5, 2, -2.9]}
+        size={[1.2, 0.8]}
+        image="/art/painting1.jpg"
+        onClick={() => setActive("painting")}
+      />
+
+      {/* EASEL (as plane for now) */}
+      <ClickableArt
+        position={[1.5, 1.5, -2.9]}
+        size={[1, 1.2]}
+        image="/art/easel.jpg"
+        onClick={() => setActive("easel")}
+      />
+    </>
+  );
+}
+
+/* 🖼️ CLICKABLE IMAGE PLANE */
+function ClickableArt({ position, size, image, onClick }) {
+  const texture = useTextureSafe(image);
+
+  return (
+    <mesh position={position} onClick={onClick}>
+      <planeGeometry args={size} />
+      <meshStandardMaterial map={texture} />
+    </mesh>
+  );
+}
+
+/* 🧰 safe texture loader */
+function useTextureSafe(url) {
+  const { useLoader } = require("@react-three/fiber");
+  const THREE = require("three");
+  return useLoader(THREE.TextureLoader, url);
+}
+
 const styles = {
-  container: {
-    width: "100vw",
-    height: "100vh",
-    overflow: "hidden",
-    position: "relative",
-  },
-  room: {
-    width: "110%",
-    height: "110%",
-    position: "absolute",
-    top: "-5%",
-    left: "-5%",
-    transition: "transform 0.2s ease-out",
-  },
-  bg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  },
-  hotspot: {
-    position: "absolute",
-    width: "100px",
-    height: "100px",
-    cursor: "pointer",
-  },
   modal: {
     position: "fixed",
     inset: 0,
