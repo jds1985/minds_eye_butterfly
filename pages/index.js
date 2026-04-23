@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Home() {
   const [active, setActive] = useState(null);
+  const containerRef = useRef(null);
 
   const artworks = {
     painting: {
@@ -16,23 +17,52 @@ export default function Home() {
     },
   };
 
+  // 🌀 CAMERA MOVEMENT
+  useEffect(() => {
+    const handleMove = (x, y) => {
+      const moveX = (x - window.innerWidth / 2) / 40;
+      const moveY = (y - window.innerHeight / 2) / 40;
+
+      if (containerRef.current) {
+        containerRef.current.style.transform =
+          `scale(1.05) translate(${-moveX}px, ${-moveY}px)`;
+      }
+    };
+
+    const mouseMove = (e) => handleMove(e.clientX, e.clientY);
+    const touchMove = (e) => {
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+    };
+
+    window.addEventListener("mousemove", mouseMove);
+    window.addEventListener("touchmove", touchMove);
+
+    return () => {
+      window.removeEventListener("mousemove", mouseMove);
+      window.removeEventListener("touchmove", touchMove);
+    };
+  }, []);
+
   return (
     <div style={styles.container}>
 
-      {/* ROOM */}
-      <img src="/studio.jpg" style={styles.bg} />
+      {/* 🏡 MOVING ROOM */}
+      <div ref={containerRef} style={styles.room}>
+        <img src="/studio.jpg" style={styles.bg} />
 
-      {/* PAINTING HOTSPOT */}
-      <div
-        style={{ ...styles.hotspot, top: "30%", left: "25%" }}
-        onClick={() => setActive("painting")}
-      />
+        {/* PAINTING */}
+        <div
+          style={{ ...styles.hotspot, top: "30%", left: "25%" }}
+          onClick={() => setActive("painting")}
+        />
 
-      {/* EASEL HOTSPOT */}
-      <div
-        style={{ ...styles.hotspot, top: "55%", left: "60%" }}
-        onClick={() => setActive("easel")}
-      />
+        {/* EASEL */}
+        <div
+          style={{ ...styles.hotspot, top: "55%", left: "60%" }}
+          onClick={() => setActive("easel")}
+        />
+      </div>
 
       {/* MODAL */}
       {active && (
@@ -62,13 +92,21 @@ const styles = {
   container: {
     width: "100vw",
     height: "100vh",
+    overflow: "hidden",
     position: "relative",
-    overflow: "hidden"
+  },
+  room: {
+    width: "110%",
+    height: "110%",
+    position: "absolute",
+    top: "-5%",
+    left: "-5%",
+    transition: "transform 0.2s ease-out",
   },
   bg: {
     width: "100%",
     height: "100%",
-    objectFit: "cover"
+    objectFit: "cover",
   },
   hotspot: {
     position: "absolute",
@@ -82,7 +120,7 @@ const styles = {
     background: "rgba(0,0,0,0.85)",
     display: "flex",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
   },
   card: {
     background: "#111",
@@ -90,11 +128,11 @@ const styles = {
     borderRadius: "10px",
     width: "90%",
     maxWidth: "500px",
-    color: "#fff"
+    color: "#fff",
   },
   image: {
     width: "100%",
-    marginBottom: "10px"
+    marginBottom: "10px",
   },
   btn: {
     marginTop: "10px",
@@ -103,6 +141,6 @@ const styles = {
     background: "#222",
     color: "#fff",
     border: "none",
-    cursor: "pointer"
-  }
+    cursor: "pointer",
+  },
 };
