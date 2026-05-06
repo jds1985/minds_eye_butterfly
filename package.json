@@ -1,5 +1,5 @@
 {
-  "name": "liz-art-studio",
+  "name": "minds_eye_butterfly",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,6 +9,9 @@
   "dependencies": {
     "next": "14.2.3",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "three": "^0.160.0",
+    "@react-three/fiber": "^8.16.0",
+    "@react-three/drei": "^9.105.0"
   }
 }
