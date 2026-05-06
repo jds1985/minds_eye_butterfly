@@ -1,109 +1,90 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const roomRef = useRef(null);
+  const [active, setActive] = useState(null);
+
+  const pieces = {
+    mantel: {
+      title: "Mantel Piece",
+      image: "/art/painting1.jpg",
+      audio: "/audio/painting1.mp3",
+      status: "this one is still here",
+    },
+    easel: {
+      title: "Current Work",
+      image: "/studio.jpg",
+      audio: "/audio/painting1.mp3",
+      status: "Liz is working on this now",
+    },
+  };
 
   useEffect(() => {
     const move = (x, y) => {
-      const mouseX = (x - window.innerWidth / 2) / 50;
-      const mouseY = (y - window.innerHeight / 2) / 50;
+      const moveX = (x - window.innerWidth / 2) / 60;
+      const moveY = (y - window.innerHeight / 2) / 80;
 
       if (roomRef.current) {
         roomRef.current.style.transform =
-          `translate(${mouseX}px, ${mouseY}px) scale(1.05)`;
+          `translate(${-moveX}px, ${-moveY}px) scale(1.06)`;
       }
     };
 
-    const mouseMove = (e) => move(e.clientX, e.clientY);
-
-    const touchMove = (e) => {
-      const t = e.touches[0];
-      move(t.clientX, t.clientY);
+    const onMouseMove = (e) => move(e.clientX, e.clientY);
+    const onTouchMove = (e) => {
+      const touch = e.touches[0];
+      if (touch) move(touch.clientX, touch.clientY);
     };
 
-    window.addEventListener("mousemove", mouseMove);
-    window.addEventListener("touchmove", touchMove);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("touchmove", onTouchMove);
 
     return () => {
-      window.removeEventListener("mousemove", mouseMove);
-      window.removeEventListener("touchmove", touchMove);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
     };
   }, []);
 
   return (
-    <div style={styles.container}>
+    <main className="page">
+      <div ref={roomRef} className="room">
+        <img src="/studio.jpg" className="studio" alt="Minds Eye Butterfly studio" />
 
-      {/* ROOM */}
-      <div ref={roomRef} style={styles.room}>
+        <button
+          className="hotspot mantel"
+          onClick={() => setActive("mantel")}
+          aria-label="Open mantel artwork"
+        />
 
-        {/* BACK WALL */}
-        <img src="/layers/backwall.png" style={styles.backwall} />
-
-        {/* MID LAYER */}
-        <img src="/layers/mid.png" style={styles.mid} />
-
-        {/* FOREGROUND */}
-        <img src="/layers/front.png" style={styles.front} />
-
+        <button
+          className="hotspot easel"
+          onClick={() => setActive("easel")}
+          aria-label="Open easel artwork"
+        />
       </div>
 
-      {/* TITLE */}
-      <div style={styles.logo}>
-        MINDS EYE BUTTERFLY 🦋
-      </div>
+      <div className="brand">MINDS EYE BUTTERFLY 🦋</div>
+      <div className="hint">tap the room</div>
 
-    </div>
+      {active && (
+        <div className="modal" onClick={() => setActive(null)}>
+          <section className="card" onClick={(e) => e.stopPropagation()}>
+            <button className="close" onClick={() => setActive(null)}>×</button>
+
+            <h1>{pieces[active].title}</h1>
+
+            <img src={pieces[active].image} className="piece" alt={pieces[active].title} />
+
+            <audio controls className="audio">
+              <source src={pieces[active].audio} type="audio/mpeg" />
+            </audio>
+
+            <button className="claim">
+              {pieces[active].status}
+            </button>
+          </section>
+        </div>
+      )}
+    </main>
   );
 }
-
-const styles = {
-  container: {
-    width: "100vw",
-    height: "100vh",
-    overflow: "hidden",
-    background: "#111",
-    position: "relative",
-  },
-
-  room: {
-    width: "110%",
-    height: "110%",
-    position: "absolute",
-    top: "-5%",
-    left: "-5%",
-    transition: "transform 0.15s linear",
-  },
-
-  backwall: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    zIndex: 1,
-  },
-
-  mid: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    zIndex: 2,
-  },
-
-  front: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    zIndex: 3,
-  },
-
-  logo: {
-    position: "absolute",
-    top: "20px",
-    left: "20px",
-    color: "white",
-    zIndex: 10,
-    letterSpacing: "2px",
-  }
-};
