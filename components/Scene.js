@@ -1,33 +1,10 @@
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
 
 export default function Scene() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <Canvas camera={{ position: [0, 2, 5], fov: 60 }}>
-
-        <ambientLight intensity={1} />
-
-        {/* FLOOR */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]}>
-          <planeGeometry args={[20, 20]} />
-          <meshStandardMaterial color="#2e2e2e" />
-        </mesh>
-
-        {/* WALL */}
-        <mesh position={[0, 5, -10]}>
-          <planeGeometry args={[20, 10]} />
-          <meshStandardMaterial color="#4b3b34" />
-        </mesh>
-
-        {/* TEST PAINTING */}
-        <mesh position={[0, 4, -9]}>
-          <planeGeometry args={[3, 2]} />
-          <meshStandardMaterial color="white" />
-        </mesh>
-
-        <OrbitControls />
-
+      <Canvas>
+        <ambientLight />
       </Canvas>
     </div>
   );
