@@ -13,7 +13,7 @@ export default function Home() {
     },
     easel: {
       title: "Current Work",
-      image: "/studio.jpg",
+      image: "/Studio.jpg",
       audio: "/audio/painting1.mp3",
       status: "Liz is working on this now",
     },
@@ -48,7 +48,7 @@ export default function Home() {
   return (
     <main className="page">
       <div ref={roomRef} className="room">
-        <img src="/studio.jpg" className="studio" alt="Minds Eye Butterfly studio" />
+        <img src="/Studio.jpg" className="studio" alt="Minds Eye Butterfly studio" />
 
         <button
           className="hotspot mantel"
