@@ -20,16 +20,13 @@ export default function Scene() {
           <meshStandardMaterial color="#4b3b34" />
         </mesh>
 
-        {/* TEST ART */}
-        <mesh position={[0, 4, -9.8]}>
+        {/* TEST PAINTING */}
+        <mesh position={[0, 4, -9]}>
           <planeGeometry args={[3, 2]} />
           <meshStandardMaterial color="white" />
         </mesh>
 
-        <OrbitControls
-          enableZoom={false}
-          enablePan={false}
-        />
+        <OrbitControls />
 
       </Canvas>
     </div>
