@@ -48,17 +48,19 @@ export default function AtelierStudio() {
     }
   }, []);
 
+  const totalArtworks = artworks.length || 1;
   const currentArt = artworks[activeIndex] || artworks[0];
-  const currentSketch = artworks[sketchIndex] || artworks[0];
+  const safeSketchIdx = sketchIndex % totalArtworks;
+  const currentSketch = artworks[safeSketchIdx] || artworks[0];
 
-  const prevArt = () => setActiveIndex((prev) => (prev === 0 ? artworks.length - 1 : prev - 1));
-  const nextArt = () => setActiveIndex((prev) => (prev === artworks.length - 1 ? 0 : prev + 1));
+  const prevArt = () => setActiveIndex((prev) => (prev === 0 ? totalArtworks - 1 : prev - 1));
+  const nextArt = () => setActiveIndex((prev) => (prev === totalArtworks - 1 ? 0 : prev + 1));
 
   const nextSketch = () => {
     if (pageFlipping) return;
     setPageFlipping(true);
     setTimeout(() => {
-      setSketchIndex((prev) => (prev === artworks.length - 1 ? 0 : prev + 1));
+      setSketchIndex((prev) => (prev + 1) % totalArtworks);
       setPageFlipping(false);
     }, 280);
   };
@@ -67,7 +69,7 @@ export default function AtelierStudio() {
     if (pageFlipping) return;
     setPageFlipping(true);
     setTimeout(() => {
-      setSketchIndex((prev) => (prev === 0 ? artworks.length - 1 : prev - 1));
+      setSketchIndex((prev) => (prev === 0 ? totalArtworks - 1 : prev - 1));
       setPageFlipping(false);
     }, 280);
   };
@@ -134,7 +136,6 @@ export default function AtelierStudio() {
         {/* Room View Hotspots */}
         {activeMode === 'room' && (
           <>
-            {/* Hotspot: Laptop */}
             <div
               onClick={() => setActiveMode('laptop')}
               className="absolute z-20 cursor-pointer group"
@@ -152,7 +153,6 @@ export default function AtelierStudio() {
               </span>
             </div>
 
-            {/* Hotspot: Spiral Sketchbook on the Table */}
             <div
               onClick={() => setActiveMode('sketchbook')}
               className="absolute z-20 cursor-pointer group"
@@ -167,7 +167,7 @@ export default function AtelierStudio() {
             >
               <div className="h-full w-full rounded-lg border-2 border-amber-400/50 bg-amber-500/20 group-hover:bg-amber-500/40 transition shadow-[0_0_15px_rgba(245,158,11,0.6)]" />
               <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow">
-                Open Sketchbook
+                Open Artist Sketchbook
               </span>
             </div>
           </>
@@ -228,7 +228,7 @@ export default function AtelierStudio() {
                   {currentArt?.title}
                 </h2>
                 <p className="text-xs text-purple-300 font-medium">
-                  {currentArt?.medium} • {activeIndex + 1} of {artworks.length}
+                  {currentArt?.medium} • {activeIndex + 1} of {totalArtworks}
                 </p>
               </div>
 
@@ -301,7 +301,6 @@ export default function AtelierStudio() {
           activeMode === 'sketchbook' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
         }`}
       >
-        {/* Soft amber illumination on desk surface */}
         <div className="absolute w-[600px] h-[600px] rounded-full bg-amber-600/15 blur-3xl pointer-events-none" />
 
         {/* Top Control Header */}
@@ -315,84 +314,89 @@ export default function AtelierStudio() {
           </button>
 
           <span className="text-xs font-serif tracking-widest text-amber-200/90 uppercase drop-shadow">
-            Page {sketchIndex + 1} of {artworks.length}
+            Page {safeSketchIdx + 1} of {totalArtworks}
           </span>
         </div>
 
-        {/* Vertical Portrait Pad Container with Side Arrows */}
-        <div className="relative w-full max-w-xl flex items-center justify-center">
+        {/* Vertical Portrait Book Stage */}
+        <div className="relative flex items-center justify-center">
           
-          {/* Flip Back Arrow */}
+          {/* Side Arrow: Previous */}
           <button
             onClick={prevSketch}
-            className="absolute -left-4 sm:-left-12 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
-            title="Previous page"
+            className="absolute -left-16 sm:-left-20 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
+            title="Previous sketch"
           >
             <ChevronLeft className="h-7 w-7" />
           </button>
 
-          {/* Single Portrait Sheet Pad */}
+          {/* Strict Vertical Portrait Sheet (3:4 aspect ratio locked) */}
           <div
             onClick={nextSketch}
-            className={`relative w-full max-w-md h-[78vh] flex flex-col justify-between rounded-b-xl bg-[#f5ede0] shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_0_1px_rgba(180,150,110,0.3)] border-x border-b border-[#c8baa0] overflow-hidden cursor-pointer group transition-all duration-300 ${
-              pageFlipping ? 'scale-[0.97] -translate-y-2 opacity-75' : 'scale-100 translate-y-0 opacity-100'
+            className={`relative h-[82vh] max-h-[820px] aspect-[3/4] flex rounded-2xl bg-[#f5ede0] shadow-[0_30px_70px_rgba(0,0,0,0.95),0_0_0_1px_rgba(180,150,110,0.3)] border border-[#c8baa0] overflow-hidden cursor-pointer group transition-all duration-300 ${
+              pageFlipping ? 'scale-[0.98] -translate-y-1 opacity-80' : 'scale-100 translate-y-0 opacity-100'
             }`}
-            title="Click to flip to next page"
+            title="Click page to flip forward"
           >
             {/* Paper Texture Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-stone-900/[0.06] via-transparent to-stone-900/[0.08] pointer-events-none z-20" />
-            <div className="absolute inset-0 bg-[radial-gradient(#0000000a_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none z-20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-900/[0.08] via-transparent to-stone-900/[0.04] pointer-events-none z-20" />
+            <div className="absolute inset-0 bg-[radial-gradient(#0000000d_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none z-20" />
 
-            {/* TOP WIRE SPIRAL BINDING */}
-            <div className="relative w-full h-9 bg-[#dfd4be] border-b border-[#bfae94] flex items-center justify-evenly px-4 shadow-md z-30">
-              {[...Array(15)].map((_, i) => (
-                <div key={i} className="relative flex flex-col items-center">
-                  <div className="w-2.5 h-6 rounded-full bg-gradient-to-b from-stone-400 via-stone-200 to-stone-600 shadow-sm border border-stone-600" />
-                  <div className="w-1.5 h-1.5 rounded-full bg-stone-900 shadow-inner -mt-1" />
+            {/* LEFT WIRE SPIRAL BINDING */}
+            <div className="relative w-10 sm:w-12 h-full bg-[#dfd4be] border-r border-[#bfae94] flex flex-col justify-evenly items-center shadow-inner z-30 py-4">
+              {[...Array(16)].map((_, i) => (
+                <div key={i} className="relative flex items-center justify-center w-full">
+                  <div className="h-3 w-8 rounded-full bg-gradient-to-r from-stone-400 via-stone-200 to-stone-600 shadow-md border border-stone-600" />
+                  <div className="absolute h-1 w-2 rounded-full bg-stone-900 left-1 shadow-inner" />
                 </div>
               ))}
             </div>
 
-            {/* Micro Perforation Line under spiral */}
-            <div className="w-full border-b border-dashed border-stone-400/80 my-1 pointer-events-none" />
-
-            {/* MAIN PORTRAIT SKETCH CANVAS */}
-            <div className="relative flex-1 mx-4 sm:mx-6 my-2 flex items-center justify-center p-2 rounded-lg bg-[#efe4d2] border border-stone-300 shadow-inner overflow-hidden">
-              <img
-                key={currentSketch?.id}
-                src={currentSketch?.imageUrl}
-                alt={currentSketch?.title}
-                className="max-h-[58vh] w-auto max-w-full rounded object-contain shadow-md filter contrast-105 transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-            </div>
-
-            {/* BOTTOM HANDWRITTEN ANNOTATION FOOTER */}
-            <div className="px-6 pb-4 pt-1 flex items-center justify-between border-t border-stone-300/80 text-stone-700">
-              <div>
-                <h4 className="font-serif font-bold text-sm tracking-wide text-stone-900">
-                  {currentSketch?.title}
-                </h4>
-                <p className="font-serif italic text-xs text-stone-600">
-                  {currentSketch?.medium || 'Atelier Study'}
-                </p>
+            {/* MAIN PORTRAIT PAGE CONTENT */}
+            <div className="relative flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-hidden">
+              {/* Header plate */}
+              <div className="flex items-center justify-between border-b border-stone-300 pb-2">
+                <span className="font-mono text-[10px] tracking-widest uppercase text-stone-500 font-bold">
+                  Plate № {String(safeSketchIdx + 1).padStart(2, '0')}
+                </span>
+                <span className="text-[11px] font-serif italic text-stone-600">
+                  Archival Atelier Study
+                </span>
               </div>
 
-              <div className="text-right">
-                <span className="font-mono text-[10px] text-stone-500 uppercase tracking-widest block">
-                  Sheet № {sketchIndex + 1}
-                </span>
-                <span className="text-[11px] font-serif text-amber-800 font-semibold group-hover:translate-x-1 transition-transform inline-block">
+              {/* Centered Artwork Display */}
+              <div className="relative flex-1 my-3 rounded-xl border border-stone-300 bg-[#efe4d2] p-2 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-amber-600/50 transition">
+                <img
+                  key={currentSketch?.id}
+                  src={currentSketch?.imageUrl}
+                  alt={currentSketch?.title}
+                  className="max-h-full max-w-full rounded object-contain filter contrast-105 shadow-md transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+              </div>
+
+              {/* Handwritten Artist Footer */}
+              <div className="border-t border-stone-300 pt-2 flex items-center justify-between text-stone-700">
+                <div>
+                  <h4 className="font-serif font-bold text-sm tracking-wide text-stone-900">
+                    {currentSketch?.title}
+                  </h4>
+                  <p className="font-serif italic text-xs text-stone-600">
+                    {currentSketch?.medium || 'Graphite & Mixed Media'}
+                  </p>
+                </div>
+
+                <span className="text-[11px] font-serif text-amber-800 font-semibold group-hover:translate-x-1 transition-transform">
                   Turn Page →
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Flip Forward Arrow */}
+          {/* Side Arrow: Next */}
           <button
             onClick={nextSketch}
-            className="absolute -right-4 sm:-right-12 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
-            title="Next page"
+            className="absolute -right-16 sm:-right-20 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
+            title="Next sketch"
           >
             <ChevronRight className="h-7 w-7" />
           </button>
