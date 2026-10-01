@@ -1,14 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { Sparkles } from 'lucide-react';
 
 const SPOTS = [
-  { name: 'hearth', style: 'bottom-12 left-16 sm:bottom-16 sm:left-24' },
-  { name: 'armchair', style: 'bottom-24 left-8 sm:bottom-28 sm:left-12' },
-  { name: 'desk', style: 'bottom-16 right-16 sm:bottom-20 sm:right-28' },
-  { name: 'crystal', style: 'bottom-28 right-8 sm:bottom-32 sm:right-16' },
+  { name: 'hearth', style: 'bottom-16 left-12 sm:bottom-20 sm:left-24' },
+  { name: 'armchair', style: 'bottom-28 left-8 sm:bottom-32 sm:left-16' },
+  { name: 'desk', style: 'bottom-20 right-12 sm:bottom-24 sm:right-28' },
 ];
 
 export default function AmbientLucky() {
@@ -20,47 +19,44 @@ export default function AmbientLucky() {
   useEffect(() => {
     const interval = setInterval(() => {
       setSpotIndex((prev) => (prev + 1) % SPOTS.length);
-    }, 70000);
+    }, 45000);
     return () => clearInterval(interval);
   }, []);
 
   const handleClick = () => {
-    const nextClicks = clickCount + 1;
-    setClickCount(nextClicks);
+    const next = clickCount + 1;
+    setClickCount(next);
 
-    if (nextClicks === 1) setSpeech("Purrrr... *sleepy yawn*");
-    else if (nextClicks === 2) setSpeech("Meow! Are you looking for the wizard sanctum?");
-    else if (nextClicks >= 3) {
-      setSpeech("✨ Opening secret portal! ✨");
-      setTimeout(() => router.push('/studio'), 900);
+    if (next === 1) setSpeech("Purrrr... *sleepy wizard yawn*");
+    else if (next === 2) setSpeech("Meow! Click me again to enter the Sanctum...");
+    else if (next >= 3) {
+      setSpeech("✨ Teleporting! ✨");
+      setTimeout(() => router.push('/studio'), 800);
       return;
     }
-
-    setTimeout(() => setSpeech(null), 3500);
+    setTimeout(() => setSpeech(null), 3000);
   };
 
-  const currentSpot = SPOTS[spotIndex];
+  const current = SPOTS[spotIndex];
 
   return (
     <div
-      className={`absolute z-30 transition-all duration-1000 ease-in-out cursor-pointer select-none ${currentSpot.style}`}
+      className={`absolute z-30 transition-all duration-1000 cursor-pointer select-none ${current.style}`}
       onClick={handleClick}
-      title="Lucky the Wizard Cat is snoozing here..."
+      title="Lucky the Wizard Cat"
     >
-      {speech && (
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl border border-purple-400/40 bg-purple-950/90 px-3 py-1.5 text-xs font-medium text-purple-200 shadow-xl backdrop-blur-sm">
+      {speech ? (
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-xl border border-purple-400 bg-purple-950 px-3 py-1.5 text-xs text-purple-200 shadow-xl">
           {speech}
         </div>
-      )}
-
-      {!speech && (
-        <div className="absolute -top-4 right-1 pointer-events-none text-purple-300 text-xs font-serif opacity-70 animate-pulse">
+      ) : (
+        <div className="absolute -top-5 right-2 text-purple-300 text-xs font-serif opacity-80 animate-bounce">
           z z Z
         </div>
       )}
 
-      <div className="relative h-20 w-20 sm:h-24 sm:w-24 transition-transform hover:scale-110 active:scale-95 animate-pulse duration-[3500ms]">
-        <Image src="/lucky-wizard.png" alt="Lucky sleeping" fill className="object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)] filter brightness-95" />
+      <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full border-2 border-purple-400/60 bg-purple-950/80 p-2 shadow-2xl backdrop-blur transition hover:scale-110 active:scale-95">
+        <Sparkles className="h-8 w-8 text-purple-300 animate-pulse" />
       </div>
     </div>
   );
