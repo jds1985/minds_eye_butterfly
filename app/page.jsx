@@ -1,170 +1,153 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import AmbientLucky from '@/components/AmbientLucky';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import AmbientLucky from '@/components/AmbientLucky';
-import { Sparkles, X, ChevronDown } from 'lucide-react';
+import { Sparkles, Palette, ExternalLink } from 'lucide-react';
 
-export default function Home() {
+export default function HomePage() {
   const [artworks, setArtworks] = useState([]);
-  const [activeImage, setActiveImage] = useState(null);
+  const [selectedArtwork, setSelectedArtwork] = useState(null);
 
-  // Sync active artworks from Firestore
   useEffect(() => {
-    const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const items = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-        setArtworks(items);
-      },
-      (error) => {
-        console.warn('Firebase setup note: Artworks will appear once Firestore credentials are set.', error);
-      }
-    );
-
-    return () => unsubscribe();
+    try {
+      const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
+      const unsub = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+        setArtworks(docs);
+      });
+      return () => unsub();
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-zinc-950 text-white selection:bg-purple-500 selection:text-white">
-      
-      {/* HERO / ATELIER SECTION */}
-      <section className="relative h-screen w-full overflow-hidden flex flex-col justify-between p-6 sm:p-12">
-        {/* Cozy Background Room */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/den-background.jpg"
-            alt="Minds Eye Butterfly Studio"
-            fill
-            priority
-            className="object-cover object-center filter brightness-[0.82] contrast-105"
-          />
-          {/* Subtle magical vignette gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-zinc-950/60" />
+    <main className="min-h-screen bg-black text-white selection:bg-purple-500 selection:text-white">
+      {/* Hero Studio Room Section */}
+      <section className="relative h-screen w-full overflow-hidden flex flex-col justify-between p-6 sm:p-10">
+        {/* Fullscreen Room Background */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 scale-100"
+          style={{ backgroundImage: "url('/den-background.jpg')" }}
+        >
+          {/* Atmospheric Vignette Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/60 pointer-events-none" />
         </div>
 
-        {/* Ambient Sleeping/Wandering Lucky */}
-        <AmbientLucky />
-
-        {/* Top Header */}
-        <header className="relative z-10 flex items-center justify-between">
-          <div className="space-y-0.5">
-            <h1 className="font-serif text-2xl sm:text-3xl tracking-widest uppercase font-bold text-zinc-100 drop-shadow-md">
-              Minds Eye Butterfly
+        {/* Top Header Bar */}
+        <header className="relative z-20 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-serif tracking-wider text-white drop-shadow-md">
+              MINDS EYE BUTTERFLY
             </h1>
-            <p className="text-xs sm:text-sm text-purple-200/80 font-light tracking-wider">
+            <p className="text-xs sm:text-sm tracking-widest text-zinc-300 uppercase drop-shadow">
               Fine Art & Creative Atelier
             </p>
           </div>
 
-          {/* Discreet Dev Key Portal */}
           <Link
             href="/studio"
-            className="group flex items-center gap-2 rounded-full border border-purple-500/30 bg-zinc-950/40 px-3.5 py-1.5 backdrop-blur-md transition hover:border-purple-400 hover:bg-purple-950/60"
-            title="Studio Portal"
+            className="flex items-center gap-2 rounded-full border border-purple-400/40 bg-purple-950/60 px-4 py-2 text-xs font-semibold text-purple-200 backdrop-blur-md shadow-lg hover:bg-purple-900/80 transition"
           >
-            <Sparkles className="h-4 w-4 text-purple-300 transition-transform group-hover:rotate-12" />
-            <span className="text-xs font-medium text-purple-200/90 hidden sm:inline">Studio Gate</span>
+            <Sparkles className="h-3.5 w-3.5 text-purple-300" />
+            <span>Studio Sanctum</span>
           </Link>
         </header>
 
-        {/* Hero Bottom Bar */}
-        <div className="relative z-10 flex flex-col items-center justify-center space-y-4 pb-4">
+        {/* Lucky Wandering / Snoozing in the Room */}
+        <AmbientLucky />
+
+        {/* Bottom Banner & Scroll Prompt */}
+        <div className="relative z-20 flex flex-col items-center justify-center text-center pb-4">
           <a
             href="#gallery"
-            className="group flex flex-col items-center gap-1 text-xs uppercase tracking-widest text-zinc-300/80 hover:text-white transition"
+            className="group flex flex-col items-center gap-1 text-xs tracking-widest text-zinc-300 uppercase transition hover:text-white drop-shadow"
           >
             <span>Explore The Collection</span>
-            <ChevronDown className="h-4 w-4 animate-bounce text-purple-400 transition group-hover:translate-y-0.5" />
+            <span className="text-lg transition-transform group-hover:translate-y-1">↓</span>
           </a>
         </div>
       </section>
 
-      {/* GALLERY GRID SECTION */}
-      <section id="gallery" className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-8">
+      {/* Artwork Gallery Showcase */}
+      <section id="gallery" className="relative z-20 min-h-screen px-6 py-20 sm:px-12 max-w-7xl mx-auto">
         <div className="mb-12 text-center space-y-2">
-          <h2 className="font-serif text-3xl font-bold tracking-wider text-zinc-100 uppercase">
-            The Gallery
-          </h2>
-          <div className="mx-auto h-0.5 w-16 bg-purple-500/60" />
-          <p className="text-sm text-zinc-400">Selected original works</p>
+          <h2 className="text-3xl sm:text-5xl font-serif text-white">The Atelier Gallery</h2>
+          <p className="text-sm text-zinc-400">Original fine art, curated paintings, and mystical creations</p>
         </div>
 
         {artworks.length === 0 ? (
-          <div className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-16 text-center text-zinc-500">
-            <p className="text-sm">The gallery is currently being curated.</p>
-            <p className="mt-1 text-xs text-zinc-600">
-              (Use the Studio Gate or whisper to Lucky to add the first artwork)
+          <div className="mx-auto max-w-md rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 text-center backdrop-blur-sm">
+            <Palette className="mx-auto h-10 w-10 text-purple-400 mb-3 opacity-80" />
+            <h3 className="text-lg font-medium text-zinc-200">The Gallery is Awakening</h3>
+            <p className="mt-2 text-xs text-zinc-400">
+              No works are currently displayed. Head into the Studio Sanctum or wake Lucky to summon the first piece.
             </p>
+            <Link
+              href="/studio"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-purple-600/30 hover:bg-purple-500 transition"
+            >
+              Enter Sanctum
+            </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {artworks.map((art) => (
               <div
                 key={art.id}
-                onClick={() => setActiveImage(art)}
-                className="group relative aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-purple-500/50 hover:shadow-purple-950/30"
+                onClick={() => setSelectedArtwork(art)}
+                className="group relative cursor-pointer overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/80 shadow-xl transition-all hover:-translate-y-1 hover:border-purple-500/50"
               >
-                <Image
-                  src={art.imageUrl}
-                  alt={art.title}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 flex items-end p-6">
-                  <h3 className="font-serif text-lg font-semibold tracking-wide text-white">
-                    {art.title}
-                  </h3>
+                <div className="relative aspect-square w-full overflow-hidden bg-zinc-950">
+                  <img
+                    src={art.imageUrl}
+                    alt={art.title}
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-4 flex items-center justify-between">
+                  <h4 className="font-medium text-zinc-200 text-sm tracking-wide">{art.title}</h4>
+                  <ExternalLink className="h-4 w-4 text-zinc-500 group-hover:text-purple-400 transition" />
                 </div>
               </div>
             ))}
           </div>
         )}
-      </section>
 
-      {/* FULLSCREEN LIGHTBOX MODAL */}
-      {activeImage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200"
-          onClick={() => setActiveImage(null)}
-        >
-          <button
-            onClick={() => setActiveImage(null)}
-            className="absolute top-6 right-6 rounded-full border border-zinc-700 bg-zinc-900/80 p-2 text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
-          >
-            <X className="h-6 w-6" />
-          </button>
-
+        {/* Modal viewer for artwork */}
+        {selectedArtwork && (
           <div
-            className="relative max-h-[85vh] max-w-4xl overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 p-2 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md"
+            onClick={() => setSelectedArtwork(null)}
           >
-            <div className="relative h-[70vh] w-[80vw] max-w-3xl">
-              <Image
-                src={activeImage.imageUrl}
-                alt={activeImage.title}
-                fill
-                className="object-contain"
+            <div
+              className="relative max-h-[90vh] max-w-4xl overflow-hidden rounded-2xl border border-purple-500/30 bg-zinc-950 p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedArtwork.imageUrl}
+                alt={selectedArtwork.title}
+                className="max-h-[75vh] w-auto mx-auto rounded-lg object-contain"
               />
-            </div>
-            <div className="p-4 text-center">
-              <h3 className="font-serif text-lg font-bold text-zinc-100">
-                {activeImage.title}
-              </h3>
+              <div className="mt-4 flex items-center justify-between px-2">
+                <h3 className="text-lg font-serif text-white">{selectedArtwork.title}</h3>
+                <button
+                  onClick={() => setSelectedArtwork(null)}
+                  className="rounded-lg bg-zinc-800 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-700"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-zinc-900 py-8 text-center text-xs text-zinc-600">
+      {/* Footer */}
+      <footer className="border-t border-zinc-800/80 py-8 text-center text-xs text-zinc-500">
         <p>© Minds Eye Butterfly Studio. Protected by Wizard Lucky's spells.</p>
       </footer>
     </main>
