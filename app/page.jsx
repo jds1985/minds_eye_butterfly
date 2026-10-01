@@ -119,129 +119,143 @@ export default function AtelierStudio() {
 
       {/* First-Person Physical Laptop Perspective */}
       <div
-        className={`absolute inset-0 z-40 flex flex-col items-center justify-end bg-black/85 backdrop-blur-[2px] transition-opacity duration-700 pointer-events-none ${
+        className={`absolute inset-0 z-40 flex flex-col items-center justify-end bg-black/60 backdrop-blur-[4px] transition-opacity duration-700 pointer-events-none ${
           zoomed ? 'opacity-100 pointer-events-auto' : 'opacity-0'
         }`}
       >
-        {/* Glow behind the physical laptop screen */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90vw] h-[80vh] rounded-full bg-purple-900/20 blur-3xl pointer-events-none" />
+        {/* Warm Den Ambiance Backlighting the Screen Lid */}
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[85vw] h-[65vh] rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+        <div className="absolute top-[20%] left-1/2 -translate-x-1/2 w-[70vw] h-[50vh] rounded-full bg-purple-600/20 blur-2xl pointer-events-none" />
 
-        {/* Laptop Display Chassis */}
-        <div className="relative w-full max-w-6xl h-[86vh] flex flex-col justify-between rounded-t-[28px] border-[12px] sm:border-[16px] border-b-[20px] border-zinc-900 bg-zinc-950 shadow-[0_-15px_60px_rgba(0,0,0,0.95)] overflow-hidden ring-1 ring-zinc-800">
+        {/* Outer Silver Anodized Metal Shell Lid */}
+        <div className="relative w-full max-w-5xl h-[80vh] flex flex-col justify-between rounded-t-[32px] p-[10px] sm:p-[14px] pb-0 bg-gradient-to-b from-zinc-400 via-zinc-600 to-zinc-800 shadow-[0_-20px_50px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.2)]">
           
-          {/* Subtle screen glare reflections */}
-          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-purple-400/[0.04] pointer-events-none z-30" />
-
-          {/* Top Bezel with Camera Notch & Status Bar */}
-          <div className="relative z-20 flex items-center justify-between px-4 py-2 border-b border-zinc-800/80 bg-zinc-900/90 text-zinc-400 text-xs backdrop-blur">
-            {/* Window Dots / Exit Room */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setZoomed(false)}
-                title="Close laptop & step back"
-                className="h-3.5 w-3.5 rounded-full bg-red-500/90 hover:brightness-125 transition flex items-center justify-center text-[8px] text-black font-bold"
-              >
-                ×
-              </button>
-              <div className="h-3.5 w-3.5 rounded-full bg-amber-500/80" />
-              <div className="h-3.5 w-3.5 rounded-full bg-emerald-500/80" />
-              <span className="ml-3 font-mono text-[11px] text-zinc-400">Atelier Studio Pro</span>
-            </div>
-
-            {/* Simulated WebCam Center Dot */}
-            <div className="absolute left-1/2 -top-1.5 -translate-x-1/2 flex items-center gap-1.5">
-              <div className="h-1.5 w-1.5 rounded-full bg-zinc-950 ring-1 ring-zinc-700" />
-              <div className="h-1 w-1 rounded-full bg-emerald-400/80 animate-pulse" />
-            </div>
-
-            {/* Laptop System Tray & Step Back Action */}
-            <div className="flex items-center gap-4 text-zinc-400">
-              <button
-                onClick={() => setZoomed(false)}
-                className="flex items-center gap-1 text-[11px] rounded bg-zinc-800 hover:bg-zinc-700 text-purple-200 px-2 py-0.5 transition"
-              >
-                <ArrowLeft className="h-3 w-3" />
-                <span>Exit Desk</span>
-              </button>
+          {/* Inner Display Assembly: Dark Glass Screen Bezel */}
+          <div className="relative flex-1 flex flex-col justify-between rounded-t-[22px] bg-zinc-950 border border-zinc-700/80 shadow-inner overflow-hidden">
+            
+            {/* Top Bezel Bar with Centered Camera & Glass Status Bar */}
+            <div className="relative z-20 flex items-center justify-between px-5 py-2.5 border-b border-zinc-800 bg-zinc-900/95 text-zinc-300 text-xs backdrop-blur-md">
+              {/* Window Controls */}
               <div className="flex items-center gap-2">
-                <Wifi className="h-3.5 w-3.5" />
-                <Volume2 className="h-3.5 w-3.5" />
-                <Battery className="h-3.5 w-3.5 text-zinc-300" />
-              </div>
-            </div>
-          </div>
-
-          {/* Active Laptop Screen Workstation Area */}
-          <div className="relative z-10 flex-1 flex flex-col justify-between bg-zinc-950 p-4 sm:p-6 overflow-hidden">
-            {/* Art Viewer Header */}
-            <div className="text-center space-y-0.5">
-              <h2 className="text-base sm:text-xl font-serif tracking-wide text-zinc-100 drop-shadow">
-                {currentArt?.title}
-              </h2>
-              <p className="text-xs text-purple-300">
-                {currentArt?.medium} • {activeIndex + 1} of {artworks.length}
-              </p>
-            </div>
-
-            {/* Main Stage Image with Navigation Paddles */}
-            <div className="relative flex-1 flex items-center justify-center p-2 my-auto">
-              <button
-                onClick={prevArt}
-                className="absolute left-2 sm:left-4 z-20 rounded-full border border-zinc-700 bg-zinc-900/80 p-2.5 sm:p-3 text-white shadow-xl hover:bg-purple-900 hover:border-purple-400 transition"
-              >
-                <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
-              </button>
-
-              <div className="relative h-full max-h-[52vh] w-full max-w-3xl flex items-center justify-center">
-                <img
-                  key={currentArt?.id}
-                  src={currentArt?.imageUrl}
-                  alt={currentArt?.title}
-                  className="max-h-full max-w-full rounded-md object-contain border border-zinc-800 shadow-[0_8px_30px_rgba(0,0,0,0.85)] animate-in fade-in zoom-in-95 duration-300"
-                />
-              </div>
-
-              <button
-                onClick={nextArt}
-                className="absolute right-2 sm:right-4 z-20 rounded-full border border-zinc-700 bg-zinc-900/80 p-2.5 sm:p-3 text-white shadow-xl hover:bg-purple-900 hover:border-purple-400 transition"
-              >
-                <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
-              </button>
-            </div>
-
-            {/* Bottom Dock / Thumbnail Selector */}
-            <div className="flex items-center justify-center gap-3 overflow-x-auto py-2">
-              {artworks.map((item, idx) => (
                 <button
-                  key={item.id}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 rounded-lg overflow-hidden border-2 transition ${
-                    activeIndex === idx
-                      ? 'border-purple-400 scale-105 shadow-[0_0_12px_rgba(168,85,247,0.7)]'
-                      : 'border-zinc-800 opacity-60 hover:opacity-100'
-                  }`}
+                  onClick={() => setZoomed(false)}
+                  title="Close laptop & step back"
+                  className="h-3.5 w-3.5 rounded-full bg-rose-500 hover:brightness-125 transition flex items-center justify-center text-[9px] text-zinc-950 font-black shadow"
                 >
-                  <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                  ×
                 </button>
-              ))}
-            </div>
-          </div>
+                <div className="h-3.5 w-3.5 rounded-full bg-amber-500/90 shadow" />
+                <div className="h-3.5 w-3.5 rounded-full bg-emerald-500/90 shadow" />
+                <span className="ml-3 font-mono text-[11px] text-zinc-300 font-semibold tracking-wider">Atelier Gallery Display</span>
+              </div>
 
-          {/* Chin Bezel Branding */}
-          <div className="relative z-20 bg-zinc-900/95 py-1 text-center border-t border-zinc-800">
-            <span className="text-[10px] tracking-widest text-zinc-500 uppercase font-mono">
-              MINDS EYE ATELIER
-            </span>
+              {/* Physical Webcam & Status LED */}
+              <div className="absolute left-1/2 top-2 -translate-x-1/2 flex items-center gap-2 px-3 py-0.5 rounded-full bg-zinc-950/80 border border-zinc-800">
+                <div className="h-2 w-2 rounded-full bg-zinc-900 ring-1 ring-zinc-600" />
+                <div className="h-1 w-1 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+              </div>
+
+              {/* System Tray & Close Action */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setZoomed(false)}
+                  className="flex items-center gap-1.5 text-xs rounded-md bg-purple-950/70 hover:bg-purple-900 border border-purple-400/50 text-purple-200 px-3 py-1 font-medium transition shadow-sm"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Return to Room</span>
+                </button>
+                <div className="flex items-center gap-2 text-zinc-400 pl-2 border-l border-zinc-800">
+                  <Wifi className="h-3.5 w-3.5" />
+                  <Volume2 className="h-3.5 w-3.5" />
+                  <Battery className="h-3.5 w-3.5 text-emerald-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* Screen Glass Reflection Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-purple-300/[0.05] pointer-events-none z-30" />
+
+            {/* Main Interactive Screen Content */}
+            <div className="relative z-10 flex-1 flex flex-col justify-between bg-zinc-900/90 p-4 sm:p-6 overflow-hidden">
+              {/* Artwork Title & Medium Header */}
+              <div className="text-center space-y-1">
+                <h2 className="text-lg sm:text-2xl font-serif tracking-wide text-zinc-100 drop-shadow-md">
+                  {currentArt?.title}
+                </h2>
+                <p className="text-xs text-purple-300 font-medium">
+                  {currentArt?.medium} • {activeIndex + 1} of {artworks.length}
+                </p>
+              </div>
+
+              {/* Main Artwork Stage */}
+              <div className="relative flex-1 flex items-center justify-center p-2 my-auto">
+                <button
+                  onClick={prevArt}
+                  className="absolute left-2 sm:left-4 z-30 rounded-full border border-zinc-600 bg-zinc-800/90 p-3 text-white shadow-2xl hover:bg-purple-950 hover:border-purple-400 transition"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+
+                <div className="relative h-full max-h-[46vh] w-full max-w-3xl flex items-center justify-center">
+                  <img
+                    key={currentArt?.id}
+                    src={currentArt?.imageUrl}
+                    alt={currentArt?.title}
+                    className="max-h-full max-w-full rounded-lg object-contain border border-zinc-700/80 shadow-[0_12px_40px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in-95 duration-300"
+                  />
+                </div>
+
+                <button
+                  onClick={nextArt}
+                  className="absolute right-2 sm:right-4 z-30 rounded-full border border-zinc-600 bg-zinc-800/90 p-3 text-white shadow-2xl hover:bg-purple-950 hover:border-purple-400 transition"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* Bottom Carousel Thumbnail Dock */}
+              <div className="flex items-center justify-center gap-3 overflow-x-auto py-2">
+                {artworks.map((item, idx) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveIndex(idx)}
+                    className={`relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 rounded-lg overflow-hidden border-2 transition ${
+                      activeIndex === idx
+                        ? 'border-purple-400 scale-105 shadow-[0_0_12px_rgba(168,85,247,0.8)]'
+                        : 'border-zinc-700 opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Bezel Chin with Embossed Label */}
+            <div className="relative z-20 bg-zinc-950 py-1.5 text-center border-t border-zinc-800">
+              <span className="text-[10px] tracking-[0.25em] text-zinc-400 uppercase font-mono font-bold">
+                MINDS EYE ATELIER
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Physical Laptop Aluminum Keyboard Deck & Hinge Bottom Perspective */}
-        <div className="relative w-full max-w-7xl h-10 sm:h-14 bg-gradient-to-b from-zinc-800 via-zinc-850 to-zinc-900 border-t border-zinc-700 shadow-2xl rounded-t-sm flex items-center justify-center">
+        {/* Lower Laptop Base: Keyboard Deck, Recessed Hinge, and Trackpad */}
+        <div className="relative w-full max-w-6xl h-16 sm:h-20 bg-gradient-to-b from-zinc-400 via-zinc-500 to-zinc-700 rounded-t-xl border-t-2 border-zinc-200/40 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] flex flex-col items-center">
           {/* Recessed Screen Hinge */}
-          <div className="absolute -top-1 w-48 sm:w-64 h-2 bg-zinc-950 rounded-b border-b border-zinc-700" />
+          <div className="w-56 sm:w-80 h-3 bg-zinc-900 border-b border-zinc-600 rounded-b-md shadow-inner" />
           
-          {/* Subtle Top Edge of the Trackpad */}
-          <div className="w-24 sm:w-36 h-2 rounded-t-md border-t border-zinc-600/40 bg-zinc-800/40" />
+          {/* Top Edge of Backlit Keyboard */}
+          <div className="w-[85%] h-3.5 mt-1 bg-zinc-800/90 rounded border border-zinc-600/60 shadow-inner flex items-center justify-center gap-1.5 px-3">
+            {[...Array(14)].map((_, i) => (
+              <div key={i} className="h-2 flex-1 rounded-[1.5px] bg-zinc-700 border-t border-zinc-500/40 shadow-sm" />
+            ))}
+          </div>
+
+          {/* Centered Trackpad Upper Lip */}
+          <div className="w-32 sm:w-48 h-3 mt-1.5 rounded-t-lg bg-zinc-400/80 border-t-2 border-zinc-300 shadow-inner" />
         </div>
       </div>
     </main>
