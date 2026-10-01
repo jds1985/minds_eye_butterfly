@@ -20,34 +20,40 @@ const FALLBACK_ARTWORKS = [
   }
 ];
 
+// Rich Artist Sketchbook Pages (Visual sketches, studies, and notes)
 const SKETCHBOOK_PAGES = [
   {
     id: 'p1',
-    title: 'Butterfly Wing Geometry',
-    date: 'Atelier Study #01',
-    content: 'Charcoal pencil draft exploring biological symmetry and light dispersion through iridescent chitin scales.',
-    sketchType: 'pencil'
+    leftTitle: 'Chitin Lattice & Iridescence',
+    leftNote: 'Field sketch of Morpho peleides wing scales under 40x magnification. The purple hue is structural, bending twilight light rather than utilizing pigment.',
+    leftPlate: 'Plate 01 - Chitin Geometry',
+    rightTitle: 'Metamorphosis Concept',
+    rightNote: 'Final ink draft mapping wing vein flow into the oil painting base. Note the asymmetric curl along the lower apex.',
+    rightPlate: 'Plate 02 - Vein Blueprint',
+    artworkUrl: '/Studio1.jpg',
+    drawingType: 'butterfly'
   },
   {
     id: 'p2',
-    title: 'Sanctum Chandelier Form',
-    date: 'Atelier Study #02',
-    content: 'Raw ink study capturing the warm filament reflections off dark mahogany ceiling timbers.',
-    sketchType: 'ink'
+    leftTitle: 'Den Chandelier & Timber Arch',
+    leftNote: 'Rapid charcoal gesture captured from the velvet armchair. Soft amber glow from the Edison filaments reflecting across the mahogany rafters.',
+    leftPlate: 'Plate 03 - Interior Light Study',
+    rightTitle: 'Glass Table Refraction',
+    rightNote: 'Study on candle reflections and the dark lacquer top of the cocktail table. Deep violet shadows ground the workstation.',
+    rightPlate: 'Plate 04 - Refraction Grid',
+    artworkUrl: '/den-background.jpg',
+    drawingType: 'interior'
   },
   {
     id: 'p3',
-    title: 'Wizard Lucky Sleeping Poses',
-    date: 'Atelier Study #03',
-    content: 'Quick gestures of Lucky curled in the velvet nook. Tail curled tightly around mystical talisman.',
-    sketchType: 'gesture'
-  },
-  {
-    id: 'p4',
-    title: 'Violet Resin Translucence',
-    date: 'Atelier Study #04',
-    content: 'Watercolor pigment notes on mixing deep Prussian blue and violet dye with clear polymer mediums.',
-    sketchType: 'watercolor'
+    leftTitle: 'Lucky at Rest (Velvet Nook)',
+    leftNote: 'Wizard cat asleep by the potion shelf. Ear twitches every few minutes to the crackle of the hearth fire.',
+    leftPlate: 'Plate 05 - Feline Gesture Study',
+    rightTitle: 'Talisman & Hat Proportions',
+    rightNote: 'Drafting the miniature peaked wizard cap and obsidian charm. Lucky permitted exactly three minutes of posing before falling back asleep.',
+    rightPlate: 'Plate 06 - Arcane Apparel',
+    artworkUrl: '/Studio1.jpg',
+    drawingType: 'cat'
   }
 ];
 
@@ -56,7 +62,7 @@ export default function AtelierStudio() {
   const [artworks, setArtworks] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
   const [pageIndex, setPageIndex] = useState(0);
-  const [coverOpened, setCoverOpened] = useState(false);
+  const [isFlipping, setIsFlipping] = useState(false);
 
   useEffect(() => {
     try {
@@ -85,24 +91,26 @@ export default function AtelierStudio() {
   const prevArt = () => setActiveIndex((prev) => (prev === 0 ? artworks.length - 1 : prev - 1));
   const nextArt = () => setActiveIndex((prev) => (prev === artworks.length - 1 ? 0 : prev + 1));
 
-  const openSketchbook = () => {
-    setActiveMode('sketchbook');
-    setTimeout(() => setCoverOpened(true), 400);
-  };
-
-  const closeSketchbook = () => {
-    setCoverOpened(false);
+  const nextPage = () => {
+    if (isFlipping) return;
+    setIsFlipping(true);
     setTimeout(() => {
-      setActiveMode('room');
-      setPageIndex(0);
-    }, 450);
+      setPageIndex((prev) => (prev === SKETCHBOOK_PAGES.length - 1 ? 0 : prev + 1));
+      setIsFlipping(false);
+    }, 250);
   };
 
-  const nextPage = () => setPageIndex((prev) => (prev === SKETCHBOOK_PAGES.length - 1 ? 0 : prev + 1));
-  const prevPage = () => setPageIndex((prev) => (prev === 0 ? SKETCHBOOK_PAGES.length - 1 : prev - 1));
+  const prevPage = () => {
+    if (isFlipping) return;
+    setIsFlipping(true);
+    setTimeout(() => {
+      setPageIndex((prev) => (prev === 0 ? SKETCHBOOK_PAGES.length - 1 : prev - 1));
+      setIsFlipping(false);
+    }, 250);
+  };
 
   return (
-    <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-white">
+    <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-white font-sans">
       {/* Top Banner (Only visible in full room view) */}
       <header
         className={`absolute top-0 left-0 right-0 z-30 flex items-center justify-between p-6 transition-all duration-700 ${
@@ -127,7 +135,7 @@ export default function AtelierStudio() {
             <span>Laptop</span>
           </button>
           <button
-            onClick={openSketchbook}
+            onClick={() => setActiveMode('sketchbook')}
             className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-amber-950/70 px-4 py-2 text-xs font-semibold text-amber-200 backdrop-blur-md shadow-xl hover:bg-amber-900 transition"
           >
             <BookOpen className="h-3.5 w-3.5 text-amber-300" />
@@ -144,13 +152,13 @@ export default function AtelierStudio() {
             activeMode === 'laptop'
               ? '59% 68%'
               : activeMode === 'sketchbook'
-              ? '60% 84%'
+              ? '58% 82%'
               : '50% 50%',
           transform:
             activeMode === 'laptop'
               ? 'scale(6.2)'
               : activeMode === 'sketchbook'
-              ? 'scale(4.8)'
+              ? 'scale(3.8)'
               : 'scale(1)',
         }}
       >
@@ -163,7 +171,7 @@ export default function AtelierStudio() {
         {/* Room View Hotspots */}
         {activeMode === 'room' && (
           <>
-            {/* Hotspot 1: Laptop */}
+            {/* Hotspot: Laptop */}
             <div
               onClick={() => setActiveMode('laptop')}
               className="absolute z-20 cursor-pointer group"
@@ -181,9 +189,9 @@ export default function AtelierStudio() {
               </span>
             </div>
 
-            {/* Hotspot 2: Sketchbook on Glass Table */}
+            {/* Hotspot: Spiral Sketchbook on the Table */}
             <div
-              onClick={openSketchbook}
+              onClick={() => setActiveMode('sketchbook')}
               className="absolute z-20 cursor-pointer group"
               style={{
                 top: '68%',
@@ -192,11 +200,11 @@ export default function AtelierStudio() {
                 height: '18%',
                 transform: 'rotate(8deg)',
               }}
-              title="Click to inspect sketchbook"
+              title="Click to open artist sketchbook"
             >
               <div className="h-full w-full rounded-lg border-2 border-amber-400/50 bg-amber-500/20 group-hover:bg-amber-500/40 transition shadow-[0_0_15px_rgba(245,158,11,0.6)]" />
               <span className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow">
-                Open Sketchbook
+                Open Artist Sketchbook
               </span>
             </div>
           </>
@@ -324,149 +332,160 @@ export default function AtelierStudio() {
         </div>
       </div>
 
-      {/* ===================== SKETCHBOOK PERSPECTIVE ===================== */}
+      {/* ===================== REAL ARTIST SKETCHBOOK ===================== */}
       <div
-        className={`absolute inset-0 z-40 flex items-center justify-center p-4 bg-black/75 backdrop-blur-[5px] transition-all duration-700 pointer-events-none ${
+        className={`absolute inset-0 z-40 flex flex-col items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md transition-all duration-700 pointer-events-none ${
           activeMode === 'sketchbook' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
         }`}
       >
-        {/* Warm wooden desk backlighting */}
-        <div className="absolute w-[600px] h-[600px] rounded-full bg-amber-600/15 blur-3xl pointer-events-none" />
+        {/* Warm Lamp Illumination on Table */}
+        <div className="absolute w-[800px] h-[500px] rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
 
-        {/* Floating Book Header Bar */}
-        <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-50">
+        {/* Top Control Header */}
+        <div className="w-full max-w-5xl flex items-center justify-between mb-3 px-2 z-50">
           <button
-            onClick={closeSketchbook}
-            className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/80 px-4 py-2 text-xs font-semibold text-amber-200 backdrop-blur-md shadow-2xl hover:bg-zinc-900 transition"
+            onClick={() => setActiveMode('room')}
+            className="flex items-center gap-2 rounded-full border border-amber-500/50 bg-black/85 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
           >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Return to Den</span>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Close & Return to Den</span>
           </button>
 
-          <span className="text-xs font-serif tracking-widest text-amber-200/80 uppercase">
-            Atelier Field Sketchbook • Page {pageIndex + 1} of {SKETCHBOOK_PAGES.length}
+          <span className="text-xs font-serif tracking-widest text-amber-200/90 uppercase drop-shadow">
+            Atelier Sketchbook • Spread {pageIndex + 1} of {SKETCHBOOK_PAGES.length}
           </span>
         </div>
 
-        {/* 3D Sketchbook Container */}
-        <div
-          className="relative w-full max-w-4xl h-[70vh] flex items-center justify-center transition-all duration-700 ease-out"
-          style={{
-            perspective: '1400px',
-            transform: coverOpened ? 'rotateX(4deg) rotateZ(0deg)' : 'rotateX(20deg) rotateZ(-12deg) scale(0.85)',
-          }}
-        >
-          {/* Closed Leather Cover State */}
-          {!coverOpened ? (
-            <div className="relative w-[340px] sm:w-[420px] h-[520px] rounded-r-2xl rounded-l-md bg-gradient-to-r from-amber-950 via-stone-900 to-amber-950 border-2 border-amber-800/60 shadow-[0_25px_60px_rgba(0,0,0,0.9)] p-8 flex flex-col justify-between items-center text-center">
-              {/* Spiral Edge Binding */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-evenly py-4 -translate-x-4">
-                {[...Array(14)].map((_, i) => (
-                  <div key={i} className="h-3 w-7 rounded-full bg-gradient-to-r from-zinc-400 via-zinc-200 to-zinc-600 shadow-md border border-zinc-700" />
-                ))}
+        {/* The Open Sketchbook Workstation with Side Navigation Arrows */}
+        <div className="relative w-full max-w-5xl flex items-center justify-center">
+          
+          {/* Big Floating Left Page Turn Arrow */}
+          <button
+            onClick={prevPage}
+            className="absolute -left-3 sm:-left-6 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
+            title="Flip to previous sketch page"
+          >
+            <ChevronLeft className="h-7 w-7" />
+          </button>
+
+          {/* Sketchbook Physical Pad Container */}
+          <div
+            className={`relative w-full h-[68vh] sm:h-[72vh] flex rounded-2xl bg-[#f0e7d5] shadow-[0_25px_60px_rgba(0,0,0,0.95),0_0_0_1px_rgba(180,150,110,0.3)] border border-[#c4b59b] overflow-hidden transition-all duration-300 ${
+              isFlipping ? 'scale-[0.98] opacity-80 rotate-[-0.5deg]' : 'scale-100 opacity-100 rotate-0'
+            }`}
+          >
+            {/* Paper Texture Overlay (Grain, fiber specks, corner shading) */}
+            <div className="absolute inset-0 bg-gradient-to-r from-stone-900/[0.08] via-transparent to-stone-900/[0.08] pointer-events-none z-20" />
+            <div className="absolute inset-0 bg-[radial-gradient(#0000000d_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none z-20" />
+
+            {/* LEFT PAGE: Pencil / Ink Drawing Study (Click to flip backward) */}
+            <div
+              onClick={prevPage}
+              className="relative flex-1 p-5 sm:p-8 flex flex-col justify-between bg-[#f4ece0] border-r border-[#d4c7b2] cursor-pointer group"
+              title="Click left page to flip back"
+            >
+              {/* Header plate */}
+              <div className="flex items-center justify-between border-b border-stone-300 pb-2">
+                <span className="font-mono text-[10px] tracking-wider uppercase text-stone-500 font-bold">
+                  {currentPage.leftPlate}
+                </span>
+                <span className="text-[11px] font-serif italic text-stone-600">
+                  Graphite & Sepia Wash
+                </span>
               </div>
 
-              <div className="w-full border-b border-amber-700/40 pb-4 mt-6">
-                <span className="text-[10px] uppercase tracking-[0.3em] text-amber-400 font-mono">Archive Volume I</span>
+              {/* Hand-Drawn Sketch Illustration Frame */}
+              <div className="relative flex-1 my-3 rounded-lg border border-dashed border-stone-400/70 bg-[#ede4d3] p-2 flex flex-col items-center justify-center overflow-hidden shadow-inner group-hover:border-amber-600/70 transition">
+                <img
+                  src={currentPage.artworkUrl}
+                  alt={currentPage.leftTitle}
+                  className="max-h-[30vh] w-auto rounded object-contain filter contrast-125 sepia-[0.35] opacity-90 transition-transform duration-500 group-hover:scale-105"
+                />
+                <span className="mt-2 text-xs font-serif font-bold text-stone-800 tracking-wide">
+                  {currentPage.leftTitle}
+                </span>
               </div>
 
-              <div className="space-y-3">
-                <div className="h-16 w-16 mx-auto rounded-full border border-amber-500/50 flex items-center justify-center bg-amber-900/30">
-                  <Sparkles className="h-8 w-8 text-amber-300" />
-                </div>
-                <h3 className="text-2xl font-serif text-amber-100 tracking-wider">STUDIO DEN SKETCHES</h3>
-                <p className="text-xs text-amber-300/60 font-serif italic">Minds Eye Butterfly Atelier</p>
-              </div>
-
-              <div className="text-[10px] text-amber-500/70 tracking-widest uppercase font-mono">
-                Opening Cover...
+              {/* Handwritten Artist Annotation */}
+              <div className="font-serif italic text-xs text-stone-700 leading-relaxed border-t border-stone-300 pt-2">
+                "{currentPage.leftNote}"
               </div>
             </div>
-          ) : (
-            /* Open Sketchbook Spread (Two Pages + Center Spiral Binding) */
-            <div className="relative w-full h-full flex rounded-2xl bg-[#efe8da] text-stone-900 shadow-[0_30px_70px_rgba(0,0,0,0.95)] border border-[#d6cbba] overflow-hidden animate-in zoom-in-95 duration-500">
-              
-              {/* Left Page: Hand-Drawn Artwork Illustration Study */}
-              <div className="relative flex-1 p-6 sm:p-10 flex flex-col justify-between border-r border-[#ded4c1] bg-[#f7f2e7]">
-                {/* Paper texture overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-black/[0.02] via-transparent to-amber-900/[0.04] pointer-events-none" />
 
-                <div className="flex items-center justify-between border-b border-stone-300 pb-2">
-                  <span className="text-xs font-mono uppercase tracking-widest text-stone-500">{currentPage.date}</span>
-                  <span className="text-xs font-serif italic text-stone-600">Archival Graphite & Ink</span>
+            {/* CENTER SPIRAL BINDING: Real double-loop metal wire coils */}
+            <div className="relative w-8 sm:w-10 bg-[#dfd4c0] border-x border-[#c2b49d] flex flex-col justify-between py-3 items-center shadow-inner z-30">
+              {[...Array(14)].map((_, i) => (
+                <div key={i} className="relative flex items-center justify-center w-full">
+                  <div className="h-3 w-7 rounded-full bg-gradient-to-r from-stone-400 via-stone-200 to-stone-600 shadow-md border border-stone-700" />
+                  <div className="absolute h-1 w-1.5 rounded-full bg-stone-900 left-1 shadow-inner" />
                 </div>
+              ))}
+            </div>
 
-                {/* Hand Drawn Study Canvas Box */}
-                <div className="relative my-4 flex-1 rounded-xl border border-stone-300/80 bg-[#ede4d0] shadow-inner flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-                  <div className="absolute inset-2 border border-dashed border-stone-400/60 rounded-lg pointer-events-none" />
-                  
-                  <div className="relative z-10 space-y-3 max-w-xs">
-                    <div className="h-12 w-12 mx-auto rounded-full bg-amber-900/10 flex items-center justify-center border border-stone-400">
-                      <Sparkles className="h-6 w-6 text-stone-700" />
-                    </div>
-                    <h4 className="text-xl font-serif tracking-wide text-stone-900">{currentPage.title}</h4>
-                    <p className="text-xs text-stone-600 font-serif leading-relaxed italic">
-                      "{currentPage.content}"
-                    </p>
-                  </div>
-                </div>
-
-                <div className="text-left text-[11px] font-mono text-stone-500">
-                  Plate № {pageIndex * 2 + 1}
-                </div>
+            {/* RIGHT PAGE: Color Study & Working Notes (Click to flip forward) */}
+            <div
+              onClick={nextPage}
+              className="relative flex-1 p-5 sm:p-8 flex flex-col justify-between bg-[#f7f0e4] cursor-pointer group"
+              title="Click right page to flip next"
+            >
+              {/* Header plate */}
+              <div className="flex items-center justify-between border-b border-stone-300 pb-2">
+                <span className="font-serif tracking-wider text-xs font-bold text-stone-800 uppercase">
+                  {currentPage.rightTitle}
+                </span>
+                <span className="font-mono text-[10px] text-stone-500 uppercase">
+                  {currentPage.rightPlate}
+                </span>
               </div>
 
-              {/* Center Spiral Metal Wire Binding Ring */}
-              <div className="relative w-8 sm:w-10 bg-[#e0d6c2] border-x border-[#c9beaa] flex flex-col justify-evenly items-center shadow-inner z-20">
-                {[...Array(16)].map((_, i) => (
-                  <div key={i} className="h-2.5 w-6 rounded-full bg-gradient-to-r from-stone-400 via-stone-200 to-stone-500 shadow-sm border border-stone-600" />
-                ))}
-              </div>
-
-              {/* Right Page: Studio Notes & Annotations */}
-              <div className="relative flex-1 p-6 sm:p-10 flex flex-col justify-between bg-[#fbf8f0]">
-                {/* Subtle paper line rule */}
-                <div className="absolute inset-0 bg-gradient-to-bl from-black/[0.02] via-transparent to-amber-900/[0.03] pointer-events-none" />
-
-                <div className="flex items-center justify-between border-b border-stone-300 pb-2">
-                  <span className="text-xs font-serif tracking-wider text-stone-800 font-bold uppercase">Atelier Notes</span>
-                  <span className="text-xs font-mono text-stone-400">Study Ref: MEB-{(pageIndex + 1) * 14}</span>
-                </div>
-
-                <div className="my-auto space-y-4 font-serif text-stone-700 text-sm leading-relaxed px-2">
-                  <p className="first-letter:text-3xl first-letter:font-bold first-letter:text-stone-900 first-letter:mr-1">
-                    Light studies collected within the den during evening twilight. High concentrations of amber and deep violet tones complement the natural studio atmosphere.
+              {/* Working Color Palette Swatches & Geometry Study */}
+              <div className="relative flex-1 my-3 rounded-lg border border-dashed border-stone-400/70 bg-[#ede4d3] p-3 flex flex-col justify-between shadow-inner group-hover:border-amber-600/70 transition">
+                <div className="space-y-1.5 font-serif text-xs text-stone-800 leading-relaxed">
+                  <p className="first-letter:text-2xl first-letter:font-bold first-letter:text-stone-900 first-letter:mr-0.5">
+                    {currentPage.rightNote}
                   </p>
-                  <div className="p-3 rounded-lg bg-stone-200/50 border border-stone-300 text-xs font-mono text-stone-600 space-y-1">
-                    <div>• Pigment Base: Ultramarine & Burnt Umber</div>
-                    <div>• Medium: Cold-pressed 300gsm Cotton Paper</div>
-                    <div>• Curator Verification: Signed by Studio Atelier</div>
+                </div>
+
+                {/* Hand-Mixed Color Swatches on Rough Paper */}
+                <div className="pt-2 border-t border-stone-300">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500 block mb-1.5">
+                    Palette Swatches & Wash Test:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="h-8 w-10 rounded bg-[#4c1d95]/90 border border-stone-400 shadow-sm flex items-end p-0.5">
+                      <span className="text-[7px] font-mono text-white/90">Violet</span>
+                    </div>
+                    <div className="h-8 w-10 rounded bg-[#1e1b4b]/90 border border-stone-400 shadow-sm flex items-end p-0.5">
+                      <span className="text-[7px] font-mono text-white/90">Midnight</span>
+                    </div>
+                    <div className="h-8 w-10 rounded bg-[#b45309]/90 border border-stone-400 shadow-sm flex items-end p-0.5">
+                      <span className="text-[7px] font-mono text-white/90">Amber</span>
+                    </div>
+                    <div className="h-8 w-10 rounded bg-[#d97706]/80 border border-stone-400 shadow-sm flex items-end p-0.5">
+                      <span className="text-[7px] font-mono text-stone-950 font-bold">Ochre</span>
+                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Page Navigation Controls */}
-                <div className="flex items-center justify-between pt-4 border-t border-stone-300">
-                  <button
-                    onClick={prevPage}
-                    className="flex items-center gap-1 text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 py-1.5 rounded-lg border border-stone-300 hover:bg-stone-200 transition"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                    <span>Previous Page</span>
-                  </button>
-
-                  <span className="text-xs font-mono text-stone-500">Plate № {pageIndex * 2 + 2}</span>
-
-                  <button
-                    onClick={nextPage}
-                    className="flex items-center gap-1 text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 py-1.5 rounded-lg border border-stone-300 hover:bg-stone-200 transition"
-                  >
-                    <span>Next Page</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                </div>
+              {/* Bottom Footer Note with Page Flip Cue */}
+              <div className="flex items-center justify-between border-t border-stone-300 pt-2 text-[11px] font-mono text-stone-500">
+                <span>Medium: 300gsm Cold-Pressed Rag</span>
+                <span className="text-amber-800 font-semibold group-hover:translate-x-1 transition-transform">
+                  Flip next →
+                </span>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Big Floating Right Page Turn Arrow */}
+          <button
+            onClick={nextPage}
+            className="absolute -right-3 sm:-right-6 z-50 rounded-full border-2 border-amber-500/60 bg-zinc-900/95 p-3 text-amber-200 shadow-2xl hover:bg-amber-950 hover:scale-110 active:scale-95 transition"
+            title="Flip to next sketch page"
+          >
+            <ChevronRight className="h-7 w-7" />
+          </button>
         </div>
       </div>
     </main>
