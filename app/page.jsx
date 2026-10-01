@@ -295,7 +295,7 @@ export default function AtelierStudio() {
         </div>
       </div>
 
-      {/* ===================== VERTICAL PORTRAIT SKETCHBOOK ===================== */}
+      {/* ===================== VERTICAL TOP-SPIRAL SKETCHBOOK ===================== */}
       <div
         className={`absolute inset-0 z-40 flex flex-col items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-700 pointer-events-none ${
           activeMode === 'sketchbook' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
@@ -318,7 +318,7 @@ export default function AtelierStudio() {
           </span>
         </div>
 
-        {/* Vertical Portrait Book Stage */}
+        {/* Vertical Portrait Pad Container */}
         <div className="relative flex items-center justify-center">
           
           {/* Side Arrow: Previous */}
@@ -330,27 +330,30 @@ export default function AtelierStudio() {
             <ChevronLeft className="h-7 w-7" />
           </button>
 
-          {/* Strict Vertical Portrait Sheet (3:4 aspect ratio locked) */}
+          {/* Portrait Sheet Pad */}
           <div
             onClick={nextSketch}
-            className={`relative h-[82vh] max-h-[820px] aspect-[3/4] flex rounded-2xl bg-[#f5ede0] shadow-[0_30px_70px_rgba(0,0,0,0.95),0_0_0_1px_rgba(180,150,110,0.3)] border border-[#c8baa0] overflow-hidden cursor-pointer group transition-all duration-300 ${
+            className={`relative h-[82vh] max-h-[820px] aspect-[3/4] flex flex-col rounded-2xl bg-[#f5ede0] shadow-[0_30px_70px_rgba(0,0,0,0.95),0_0_0_1px_rgba(180,150,110,0.3)] border border-[#c8baa0] overflow-hidden cursor-pointer group transition-all duration-300 ${
               pageFlipping ? 'scale-[0.98] -translate-y-1 opacity-80' : 'scale-100 translate-y-0 opacity-100'
             }`}
             title="Click page to flip forward"
           >
             {/* Paper Texture Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-stone-900/[0.08] via-transparent to-stone-900/[0.04] pointer-events-none z-20" />
+            <div className="absolute inset-0 bg-gradient-to-b from-stone-900/[0.08] via-transparent to-stone-900/[0.05] pointer-events-none z-20" />
             <div className="absolute inset-0 bg-[radial-gradient(#0000000d_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none z-20" />
 
-            {/* LEFT WIRE SPIRAL BINDING */}
-            <div className="relative w-10 sm:w-12 h-full bg-[#dfd4be] border-r border-[#bfae94] flex flex-col justify-evenly items-center shadow-inner z-30 py-4">
+            {/* TOP WIRE SPIRAL BINDING */}
+            <div className="relative w-full h-11 bg-[#dfd4be] border-b border-[#bfae94] flex items-center justify-evenly px-4 shadow-inner z-30">
               {[...Array(16)].map((_, i) => (
-                <div key={i} className="relative flex items-center justify-center w-full">
-                  <div className="h-3 w-8 rounded-full bg-gradient-to-r from-stone-400 via-stone-200 to-stone-600 shadow-md border border-stone-600" />
-                  <div className="absolute h-1 w-2 rounded-full bg-stone-900 left-1 shadow-inner" />
+                <div key={i} className="relative flex flex-col items-center">
+                  <div className="w-2.5 h-7 rounded-full bg-gradient-to-b from-stone-400 via-stone-200 to-stone-600 shadow-sm border border-stone-600" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-stone-900 shadow-inner -mt-1" />
                 </div>
               ))}
             </div>
+
+            {/* Micro Perforation Line */}
+            <div className="w-full border-b border-dashed border-stone-400/80 pointer-events-none" />
 
             {/* MAIN PORTRAIT PAGE CONTENT */}
             <div className="relative flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-hidden">
