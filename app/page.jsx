@@ -33,7 +33,9 @@ export default function AtelierEngine() {
   const [soundOn, setSoundOn] = useState(false);
 
   const canvasRef = useRef(null);
+  const audioCtxRef = useRef(null);
 
+  // Firestore sync
   useEffect(() => {
     try {
       const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
@@ -51,14 +53,66 @@ export default function AtelierEngine() {
     }
   }, []);
 
-  // Living Canvas: Fireplace Embers & Hearth Flickering
+  // Procedural Hearth Sound (Web Audio API - No external mp3 required)
+  const toggleSound = () => {
+    if (!soundOn) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        audioCtxRef.current = ctx;
+
+        // Pink noise generator for burning logs
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          output[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+          output[i] *= 0.04;
+          b6 = white * 0.115926;
+        }
+
+        const whiteNoise = ctx.createBufferSource();
+        whiteNoise.buffer = noiseBuffer;
+        whiteNoise.loop = true;
+
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450, ctx.currentTime);
+
+        whiteNoise.connect(filter);
+        filter.connect(ctx.destination);
+        whiteNoise.start();
+
+        setSoundOn(true);
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      if (audioCtxRef.current) {
+        audioCtxRef.current.close();
+      }
+      setSoundOn(false);
+    }
+  };
+
+  // Living Canvas: Fireplace Embers + Flying Crows outside window
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let animationId;
-    const embers = Array.from({ length: 28 }, () => ({
+
+    // Embers
+    const embers = Array.from({ length: 30 }, () => ({
       x: 1350 + (Math.random() * 100 - 50),
       y: 650 + Math.random() * 60,
       size: Math.random() * 2.5 + 1,
@@ -68,10 +122,69 @@ export default function AtelierEngine() {
       decay: Math.random() * 0.012 + 0.006,
     }));
 
+    // Flying Crows through the gothic window (Left window bounds ~ X: 350 to 850, Y: 220 to 450)
+    const crows = [
+      { x: 380, y: 320, scale: 0.8, speedX: 1.2, speedY: 0.2, wingCycle: 0 },
+      { x: 620, y: 280, scale: 0.5, speedX: 0.9, speedY: -0.1, wingCycle: 2 },
+      { x: 250, y: 360, scale: 1.1, speedX: 1.6, speedY: 0.15, wingCycle: 4 },
+    ];
+
+    const drawCrow = (x, y, scale, wingPhase) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = 'rgba(20, 15, 25, 0.85)'; // Dark silhouette
+      
+      const wingFlap = Math.sin(wingPhase) * 10;
+
+      // Crow Body & Head
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 7, 3, 0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Left Wing
+      ctx.beginPath();
+      ctx.moveTo(-2, -1);
+      ctx.quadraticCurveTo(-6, -10 + wingFlap, -14, -6 + wingFlap);
+      ctx.quadraticCurveTo(-8, -2, 0, 0);
+      ctx.fill();
+
+      // Right Wing
+      ctx.beginPath();
+      ctx.moveTo(2, -1);
+      ctx.quadraticCurveTo(6, -10 + wingFlap, 14, -6 + wingFlap);
+      ctx.quadraticCurveTo(8, -2, 0, 0);
+      ctx.fill();
+
+      ctx.restore();
+    };
+
     const render = () => {
       ctx.clearRect(0, 0, 1920, 1080);
 
-      // Hearth Flame & Light Flickering
+      // 1. Crows Flying Outside the Windows (Clipped strictly within the bay windows)
+      ctx.save();
+      ctx.beginPath();
+      // Masking area covering window frames: X: 340 to 860, Y: 210 to 460
+      ctx.rect(340, 210, 520, 260);
+      ctx.clip();
+
+      crows.forEach((c) => {
+        c.x += c.speedX;
+        c.y += c.speedY;
+        c.wingCycle += 0.15;
+
+        // Loop crows across the outdoor sky
+        if (c.x > 880) {
+          c.x = 320;
+          c.y = 260 + Math.random() * 150;
+        }
+
+        drawCrow(c.x, c.y, c.scale, c.wingCycle);
+      });
+      ctx.restore();
+
+      // 2. Hearth Flame & Ambient Light Flickering
       const flicker = 0.85 + Math.sin(Date.now() * 0.008) * 0.08 + Math.random() * 0.07;
       const fireGrad = ctx.createRadialGradient(1350, 640, 10, 1350, 640, 240);
       fireGrad.addColorStop(0, `rgba(255, 140, 0, ${0.45 * flicker})`);
@@ -83,7 +196,7 @@ export default function AtelierEngine() {
       ctx.arc(1350, 640, 240, 0, Math.PI * 2);
       ctx.fill();
 
-      // Rising Embers
+      // 3. Rising Hearth Embers
       embers.forEach((p) => {
         p.y -= p.speedY;
         p.x += p.speedX;
@@ -149,10 +262,10 @@ export default function AtelierEngine() {
         </div>
 
         <button
-          onClick={() => setSoundOn(!soundOn)}
+          onClick={toggleSound}
           className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/80 px-4 py-2 text-xs font-medium text-amber-200 backdrop-blur-md shadow-xl hover:bg-zinc-900 transition"
         >
-          {soundOn ? <Volume2 className="h-4 w-4 text-amber-400" /> : <VolumeX className="h-4 w-4 text-zinc-400" />}
+          {soundOn ? <Volume2 className="h-4 w-4 text-amber-400 animate-pulse" /> : <VolumeX className="h-4 w-4 text-zinc-400" />}
           <span>{soundOn ? 'Atelier Hearth Active' : 'Sound Ambient Off'}</span>
         </button>
       </header>
@@ -189,7 +302,7 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
           />
 
-          {/* Canvas Engine: Fire Embers & Ambient Lighting */}
+          {/* Canvas Engine: Fire Embers, Ambient Lighting & Flying Crows */}
           <canvas
             ref={canvasRef}
             width={1920}
@@ -237,10 +350,7 @@ export default function AtelierEngine() {
             </div>
           )}
 
-          {/* 
-            HOTSPOT 3: PHYSICAL SMARTPHONE ON THE GLASS DESK
-            Renders an actual phone device with screen glow on the table beside the laptop.
-          */}
+          {/* HOTSPOT 3: SMARTPHONE ON GLASS DESK */}
           {activePortal === 'room' && (
             <div
               onClick={() => setActivePortal('phone')}
@@ -254,27 +364,16 @@ export default function AtelierEngine() {
               }}
               title="Pick up Studio Smartphone"
             >
-              {/* Glass table reflection underneath */}
               <div className="absolute -bottom-1 inset-x-0 h-2 bg-purple-500/20 blur-sm rounded-full pointer-events-none" />
-
-              {/* Physical Phone Body */}
               <div className="relative h-full w-full rounded-[6px] bg-gradient-to-b from-zinc-600 via-zinc-800 to-zinc-950 p-[1.5px] shadow-[0_4px_12px_rgba(0,0,0,0.9)] border border-zinc-500/50 group-hover:scale-105 group-hover:border-purple-400 transition-all duration-300">
-                {/* Glowing OLED Display */}
                 <div className="h-full w-full rounded-[4px] bg-zinc-950 flex flex-col justify-between p-0.5 overflow-hidden ring-1 ring-purple-500/30">
-                  {/* Miniature Top Notch */}
                   <div className="h-0.5 w-2 mx-auto rounded-full bg-black" />
-                  
-                  {/* Glowing Butterfly Wallpaper */}
                   <div className="flex-1 flex items-center justify-center">
                     <Sparkles className="h-2 w-2 text-purple-300 animate-pulse" />
                   </div>
-
-                  {/* Miniature Home Bar */}
                   <div className="h-0.5 w-2 mx-auto rounded-full bg-zinc-600" />
                 </div>
               </div>
-
-              {/* Hover Tooltip */}
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-purple-500/40 px-2 py-0.5 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
                 Studio Phone
               </div>
