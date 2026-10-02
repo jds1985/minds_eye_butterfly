@@ -34,7 +34,6 @@ export default function AtelierEngine() {
 
   const canvasRef = useRef(null);
 
-  // Firestore sync
   useEffect(() => {
     try {
       const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
@@ -171,7 +170,7 @@ export default function AtelierEngine() {
                 : activePortal === 'sketchbook'
                 ? '61% 86%'
                 : activePortal === 'phone'
-                ? '64% 65%'
+                ? '63.5% 65%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
@@ -238,21 +237,44 @@ export default function AtelierEngine() {
             </div>
           )}
 
-          {/* HOTSPOT 3: SMARTPHONE BESIDE LAPTOP */}
+          {/* 
+            HOTSPOT 3: PHYSICAL SMARTPHONE ON THE GLASS DESK
+            Renders an actual phone device with screen glow on the table beside the laptop.
+          */}
           {activePortal === 'room' && (
             <div
               onClick={() => setActivePortal('phone')}
-              className="absolute z-20 cursor-pointer group"
+              className="absolute z-20 cursor-pointer group flex items-center justify-center"
               style={{
-                top: '61.5%',
+                top: '62.2%',
                 left: '63.2%',
-                width: '3.2%',
-                height: '7.5%',
-                transform: 'rotate(-8deg)',
+                width: '2.4%',
+                height: '6.2%',
+                transform: 'perspective(400px) rotateX(25deg) rotateY(-18deg) rotateZ(8deg)',
               }}
-              title="Check Smartphone"
+              title="Pick up Studio Smartphone"
             >
-              <div className="h-full w-full rounded transition-all duration-300 group-hover:bg-purple-500/20 group-hover:ring-1 group-hover:ring-purple-400/50 shadow-[0_0_15px_rgba(168,85,247,0.4)]" />
+              {/* Glass table reflection underneath */}
+              <div className="absolute -bottom-1 inset-x-0 h-2 bg-purple-500/20 blur-sm rounded-full pointer-events-none" />
+
+              {/* Physical Phone Body */}
+              <div className="relative h-full w-full rounded-[6px] bg-gradient-to-b from-zinc-600 via-zinc-800 to-zinc-950 p-[1.5px] shadow-[0_4px_12px_rgba(0,0,0,0.9)] border border-zinc-500/50 group-hover:scale-105 group-hover:border-purple-400 transition-all duration-300">
+                {/* Glowing OLED Display */}
+                <div className="h-full w-full rounded-[4px] bg-zinc-950 flex flex-col justify-between p-0.5 overflow-hidden ring-1 ring-purple-500/30">
+                  {/* Miniature Top Notch */}
+                  <div className="h-0.5 w-2 mx-auto rounded-full bg-black" />
+                  
+                  {/* Glowing Butterfly Wallpaper */}
+                  <div className="flex-1 flex items-center justify-center">
+                    <Sparkles className="h-2 w-2 text-purple-300 animate-pulse" />
+                  </div>
+
+                  {/* Miniature Home Bar */}
+                  <div className="h-0.5 w-2 mx-auto rounded-full bg-zinc-600" />
+                </div>
+              </div>
+
+              {/* Hover Tooltip */}
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-purple-500/40 px-2 py-0.5 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
                 Studio Phone
               </div>
@@ -486,16 +508,13 @@ export default function AtelierEngine() {
           </span>
         </div>
 
-        {/* Realistic Smartphone Chassis */}
         <div className="relative w-full max-w-[340px] h-[78vh] max-h-[700px] rounded-[44px] p-3 bg-gradient-to-b from-zinc-700 via-zinc-850 to-zinc-950 border-[3px] border-zinc-600 shadow-[0_25px_60px_rgba(0,0,0,0.95)] flex flex-col justify-between overflow-hidden">
           <div className="relative flex-1 rounded-[36px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col justify-between p-4 text-white">
             
-            {/* Dynamic Island / Speaker Notch */}
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full bg-black border border-zinc-800/80 z-50 flex items-center justify-end px-2">
               <div className="h-2 w-2 rounded-full bg-zinc-900 ring-1 ring-zinc-700" />
             </div>
 
-            {/* Mobile Status Bar */}
             <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 pt-1 px-3 z-40">
               <span>9:41</span>
               <div className="flex items-center gap-1.5">
@@ -504,7 +523,6 @@ export default function AtelierEngine() {
               </div>
             </div>
 
-            {/* Mobile App Screen Content */}
             <div className="mt-4 flex-1 flex flex-col justify-between py-2 space-y-3 overflow-y-auto">
               <div className="text-center space-y-1 pt-2">
                 <div className="h-16 w-16 mx-auto rounded-full border-2 border-purple-500/60 p-0.5 shadow-lg">
@@ -516,7 +534,6 @@ export default function AtelierEngine() {
                 <p className="text-[10px] text-zinc-400 font-mono">@mindseyebutterfly • Atelier Studio</p>
               </div>
 
-              {/* Action Buttons */}
               <div className="space-y-2 pt-2">
                 <a
                   href="https://www.tiktok.com/@mindseyebutterfly"
