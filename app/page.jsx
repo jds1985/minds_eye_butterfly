@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, 
-  Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, Frame, Lock
+  Wifi, Battery, Mail, Send, Palette, Frame, Lock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -72,7 +72,6 @@ export default function AtelierEngine() {
   const [artIdx, setArtIdx] = useState(0);
   const [sketchIdx, setSketchIdx] = useState(0);
   const [pageFlipping, setPageFlipping] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
 
   // Hidden hearth passcode state
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
@@ -308,28 +307,18 @@ export default function AtelierEngine() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-white font-sans flex items-center justify-center">
-      {/* Clean Header: Room Title + Ambient Hearth Audio */}
+      
+      {/* Centered Logo Header */}
       <header
-        className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-6 transition-all duration-700 ${
-          activePortal !== 'room' ? 'opacity-0 -translate-y-8 pointer-events-none' : 'opacity-100 translate-y-0'
+        className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-center p-6 transition-all duration-700 pointer-events-none ${
+          activePortal !== 'room' ? 'opacity-0 -translate-y-8' : 'opacity-100 translate-y-0'
         }`}
       >
-        <div>
-          <h1 className="text-xl sm:text-2xl font-serif tracking-wider drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-            MINDS EYE BUTTERFLY
-          </h1>
-          <p className="text-[10px] sm:text-xs tracking-widest text-zinc-300 uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-            Living Atelier Studio
-          </p>
-        </div>
-
-        <button
-          onClick={() => setSoundOn(!soundOn)}
-          className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/80 px-4 py-2 text-xs font-medium text-amber-200 backdrop-blur-md shadow-xl hover:bg-zinc-900 transition"
-        >
-          {soundOn ? <Volume2 className="h-4 w-4 text-amber-400 animate-pulse"/> : <VolumeX className="h-4 w-4 text-zinc-400"/>}
-          <span>{soundOn ? 'Atelier Hearth Active' : 'Sound Ambient Off'}</span>
-        </button>
+        <img
+          src="/logo.png"
+          alt="Minds Eye Butterfly"
+          className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] filter brightness-110"
+        />
       </header>
 
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
@@ -375,7 +364,7 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
-          {/* Hidden Hearth Dev Entrance - No Pin or Overlay */}
+          {/* Hidden Hearth Dev Entrance */}
           {activePortal === 'room' && (
             <div
               onClick={() => {
