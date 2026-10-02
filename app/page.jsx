@@ -310,15 +310,29 @@ export default function AtelierEngine() {
       
       {/* Centered Logo Header */}
       <header
-        className={`absolute top-2 sm:top-4 left-0 right-0 z-40 flex items-center justify-center pointer-events-none transition-all duration-700 ${
+        className={`absolute top-0 left-0 right-0 z-40 flex flex-col items-center justify-center pt-3 pb-2 transition-all duration-700 pointer-events-none ${
           activePortal !== "room" ? "opacity-0 -translate-y-8" : "opacity-100 translate-y-0"
         }`}
       >
-        <img
-          src="/Minds_eye_butterfly.png"
-          alt="Minds Eye Butterfly"
-          className="h-12 sm:h-16 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]"
-        />
+        <div className="flex flex-col items-center justify-center gap-1 select-none">
+          <div className="relative flex items-center justify-center">
+            <span className="hidden sm:inline-block w-16 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent mr-4" />
+            <img
+              src="/Minds_eye_butterfly.png"
+              alt="Minds Eye Butterfly"
+              className="h-16 sm:h-20 w-auto object-contain filter drop-shadow-[0_4px_16px_rgba(217,119,6,0.35)] hover:scale-105 transition-transform"
+            />
+            <span className="hidden sm:inline-block w-16 h-[1px] bg-gradient-to-r from-transparent via-amber-400/40 to-transparent ml-4" />
+          </div>
+
+          <h1 className="font-serif text-lg sm:text-2xl font-semibold tracking-[0.22em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] uppercase">
+            Minds Eye Butterfly
+          </h1>
+
+          <p className="font-mono text-[9px] sm:text-[10px] tracking-[0.35em] text-amber-300/70 uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+            Living Atelier & Archival Sanctuary
+          </p>
+        </div>
       </header>
 
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
