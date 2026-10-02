@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
-  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette 
+  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, 
+  Frame, Info
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -25,7 +26,8 @@ const FALLBACK_ARTWORKS = [
 ];
 
 export default function AtelierEngine() {
-  const [activePortal, setActivePortal] = useState('room'); // 'room' | 'laptop' | 'sketchbook' | 'phone'
+  // 'room' | 'laptop' | 'sketchbook' | 'phone' | 'easel' | 'wallArt'
+  const [activePortal, setActivePortal] = useState('room');
   const [artworks, setArtworks] = useState([]);
   const [artIdx, setArtIdx] = useState(0);
   const [sketchIdx, setSketchIdx] = useState(0);
@@ -53,7 +55,7 @@ export default function AtelierEngine() {
     }
   }, []);
 
-  // Procedural Hearth Sound (Web Audio API - No external mp3 required)
+  // Procedural Hearth Sound (Web Audio API)
   const toggleSound = () => {
     if (!soundOn) {
       try {
@@ -61,7 +63,6 @@ export default function AtelierEngine() {
         const ctx = new AudioContext();
         audioCtxRef.current = ctx;
 
-        // Pink noise generator for burning logs
         const bufferSize = ctx.sampleRate * 2;
         const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
@@ -103,15 +104,13 @@ export default function AtelierEngine() {
     }
   };
 
-  // Living Canvas: Fireplace Embers + Flying Crows outside window
+  // Living Canvas: Fireplace Embers & Crows outside window
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let animationId;
-
-    // Embers
     const embers = Array.from({ length: 30 }, () => ({
       x: 1350 + (Math.random() * 100 - 50),
       y: 650 + Math.random() * 60,
@@ -122,7 +121,6 @@ export default function AtelierEngine() {
       decay: Math.random() * 0.012 + 0.006,
     }));
 
-    // Flying Crows through the gothic window (Left window bounds ~ X: 350 to 850, Y: 220 to 450)
     const crows = [
       { x: 380, y: 320, scale: 0.8, speedX: 1.2, speedY: 0.2, wingCycle: 0 },
       { x: 620, y: 280, scale: 0.5, speedX: 0.9, speedY: -0.1, wingCycle: 2 },
@@ -133,23 +131,19 @@ export default function AtelierEngine() {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(scale, scale);
-      ctx.fillStyle = 'rgba(20, 15, 25, 0.85)'; // Dark silhouette
-      
+      ctx.fillStyle = 'rgba(20, 15, 25, 0.85)';
       const wingFlap = Math.sin(wingPhase) * 10;
 
-      // Crow Body & Head
       ctx.beginPath();
       ctx.ellipse(0, 0, 7, 3, 0.1, 0, Math.PI * 2);
       ctx.fill();
 
-      // Left Wing
       ctx.beginPath();
       ctx.moveTo(-2, -1);
       ctx.quadraticCurveTo(-6, -10 + wingFlap, -14, -6 + wingFlap);
       ctx.quadraticCurveTo(-8, -2, 0, 0);
       ctx.fill();
 
-      // Right Wing
       ctx.beginPath();
       ctx.moveTo(2, -1);
       ctx.quadraticCurveTo(6, -10 + wingFlap, 14, -6 + wingFlap);
@@ -162,29 +156,24 @@ export default function AtelierEngine() {
     const render = () => {
       ctx.clearRect(0, 0, 1920, 1080);
 
-      // 1. Crows Flying Outside the Windows (Clipped strictly within the bay windows)
+      // Window crows
       ctx.save();
       ctx.beginPath();
-      // Masking area covering window frames: X: 340 to 860, Y: 210 to 460
       ctx.rect(340, 210, 520, 260);
       ctx.clip();
-
       crows.forEach((c) => {
         c.x += c.speedX;
         c.y += c.speedY;
         c.wingCycle += 0.15;
-
-        // Loop crows across the outdoor sky
         if (c.x > 880) {
           c.x = 320;
           c.y = 260 + Math.random() * 150;
         }
-
         drawCrow(c.x, c.y, c.scale, c.wingCycle);
       });
       ctx.restore();
 
-      // 2. Hearth Flame & Ambient Light Flickering
+      // Hearth Fire & Light Flickering
       const flicker = 0.85 + Math.sin(Date.now() * 0.008) * 0.08 + Math.random() * 0.07;
       const fireGrad = ctx.createRadialGradient(1350, 640, 10, 1350, 640, 240);
       fireGrad.addColorStop(0, `rgba(255, 140, 0, ${0.45 * flicker})`);
@@ -196,18 +185,16 @@ export default function AtelierEngine() {
       ctx.arc(1350, 640, 240, 0, Math.PI * 2);
       ctx.fill();
 
-      // 3. Rising Hearth Embers
+      // Rising Embers
       embers.forEach((p) => {
         p.y -= p.speedY;
         p.x += p.speedX;
         p.life -= p.decay;
-
         if (p.life <= 0 || p.y < 460) {
           p.x = 1350 + (Math.random() * 90 - 45);
           p.y = 660 + Math.random() * 20;
           p.life = 1;
         }
-
         ctx.fillStyle = `rgba(255, 200, 100, ${p.life * 0.9})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -284,6 +271,10 @@ export default function AtelierEngine() {
                 ? '61% 86%'
                 : activePortal === 'phone'
                 ? '63.5% 65%'
+                : activePortal === 'easel'
+                ? '73% 48%'
+                : activePortal === 'wallArt'
+                ? '64% 28%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
@@ -292,6 +283,10 @@ export default function AtelierEngine() {
                 ? 'scale(3.8)'
                 : activePortal === 'phone'
                 ? 'scale(5.2)'
+                : activePortal === 'easel'
+                ? 'scale(3.5)'
+                : activePortal === 'wallArt'
+                ? 'scale(3.9)'
                 : 'scale(1)',
           }}
         >
@@ -379,6 +374,47 @@ export default function AtelierEngine() {
               </div>
             </div>
           )}
+
+          {/* HOTSPOT 4: STUDIO EASEL PAINTING (Right foreground canvas) */}
+          {activePortal === 'room' && (
+            <div
+              onClick={() => setActivePortal('easel')}
+              className="absolute z-20 cursor-pointer group"
+              style={{
+                top: '36%',
+                left: '67.5%',
+                width: '10.5%',
+                height: '24%',
+                transform: 'rotate(-4deg)',
+              }}
+              title="Inspect Current Easel Piece"
+            >
+              <div className="h-full w-full rounded-md transition-all duration-300 group-hover:bg-amber-500/15 group-hover:ring-1 group-hover:ring-amber-400/60 shadow-[0_0_25px_rgba(245,158,11,0.35)]" />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-500/40 px-2.5 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
+                View Studio Easel
+              </div>
+            </div>
+          )}
+
+          {/* HOTSPOT 5: WALL MASTERPIECE (Framed Painting Above Fireplace) */}
+          {activePortal === 'room' && (
+            <div
+              onClick={() => setActivePortal('wallArt')}
+              className="absolute z-20 cursor-pointer group"
+              style={{
+                top: '20%',
+                left: '62.5%',
+                width: '6.8%',
+                height: '14.5%',
+              }}
+              title="Inspect Framed Gallery Painting"
+            >
+              <div className="h-full w-full rounded-sm transition-all duration-300 group-hover:bg-amber-400/20 group-hover:ring-1 group-hover:ring-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.35)]" />
+              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-400/40 px-2.5 py-0.5 text-[10px] text-amber-100 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
+                Inspect Wall Artwork
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -393,7 +429,6 @@ export default function AtelierEngine() {
 
         <div className="relative w-full max-w-5xl h-[80vh] flex flex-col justify-between rounded-t-[32px] p-[10px] sm:p-[14px] pb-0 bg-gradient-to-b from-zinc-400 via-zinc-600 to-zinc-800 shadow-[0_-20px_50px_rgba(0,0,0,0.9),0_0_0_1px_rgba(255,255,255,0.2)]">
           <div className="relative flex-1 flex flex-col justify-between rounded-t-[22px] bg-zinc-950 border border-zinc-700/80 shadow-inner overflow-hidden">
-            
             <div className="relative z-20 flex items-center justify-between px-5 py-2.5 border-b border-zinc-800 bg-zinc-900/95 text-zinc-300 text-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <button
@@ -609,7 +644,6 @@ export default function AtelierEngine() {
 
         <div className="relative w-full max-w-[340px] h-[78vh] max-h-[700px] rounded-[44px] p-3 bg-gradient-to-b from-zinc-700 via-zinc-850 to-zinc-950 border-[3px] border-zinc-600 shadow-[0_25px_60px_rgba(0,0,0,0.95)] flex flex-col justify-between overflow-hidden">
           <div className="relative flex-1 rounded-[36px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col justify-between p-4 text-white">
-            
             <div className="absolute top-2.5 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full bg-black border border-zinc-800/80 z-50 flex items-center justify-end px-2">
               <div className="h-2 w-2 rounded-full bg-zinc-900 ring-1 ring-zinc-700" />
             </div>
@@ -693,6 +727,96 @@ export default function AtelierEngine() {
             <div className="pt-2 flex justify-center">
               <div className="h-1 w-32 rounded-full bg-zinc-600" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================= EASEL PAINTING PORTAL ======================= */}
+      <div
+        className={`absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-700 pointer-events-none ${
+          activePortal === 'easel' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
+        }`}
+      >
+        <div className="absolute w-[700px] h-[700px] rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
+
+        {/* Top Header */}
+        <div className="w-full max-w-4xl flex items-center justify-between mb-4 z-50">
+          <button
+            onClick={() => setActivePortal('room')}
+            className="flex items-center gap-2 rounded-full border border-amber-500/50 bg-black/90 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Step Back to Room</span>
+          </button>
+
+          <span className="text-xs font-serif tracking-widest text-amber-200/90 uppercase drop-shadow flex items-center gap-1.5">
+            <Palette className="h-3.5 w-3.5 text-amber-400" />
+            <span>Studio Easel Work-in-Progress</span>
+          </span>
+        </div>
+
+        {/* Featured Easel Canvas in Solid Wood Frame */}
+        <div className="relative max-h-[76vh] max-w-3xl flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-stone-800 via-stone-900 to-black border-4 border-amber-800/70 shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
+          <img
+            src={artworks[0]?.imageUrl || '/Studio1.jpg'}
+            alt="Easel Artwork"
+            className="max-h-[58vh] w-auto max-w-full rounded-lg object-contain shadow-2xl border border-stone-700"
+          />
+
+          <div className="w-full mt-3 pt-3 border-t border-amber-800/40 flex items-center justify-between px-2 text-stone-300">
+            <div>
+              <h3 className="font-serif text-base sm:text-lg font-bold text-amber-100">
+                {artworks[0]?.title || 'Atelier Focal Study'}
+              </h3>
+              <p className="text-xs text-amber-300/80 font-serif italic">
+                {artworks[0]?.medium || 'Oil on Belgian Linen'}
+              </p>
+            </div>
+            <div className="text-right text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+              Available for Collector Acquisition
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ======================= WALL MASTERPIECE PORTAL ======================= */}
+      <div
+        className={`absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-700 pointer-events-none ${
+          activePortal === 'wallArt' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
+        }`}
+      >
+        <div className="absolute w-[600px] h-[600px] rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-3xl flex items-center justify-between mb-4 z-50">
+          <button
+            onClick={() => setActivePortal('room')}
+            className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-black/90 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Step Back to Room</span>
+          </button>
+
+          <span className="text-xs font-serif tracking-widest text-amber-200/90 uppercase drop-shadow flex items-center gap-1.5">
+            <Frame className="h-3.5 w-3.5 text-amber-300" />
+            <span>Permanent Atelier Collection</span>
+          </span>
+        </div>
+
+        {/* Ornate Gilded Gold Wall Frame View */}
+        <div className="relative max-h-[76vh] max-w-2xl flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-amber-950/80 via-stone-900 to-black border-[6px] border-amber-600/80 shadow-[0_30px_70px_rgba(0,0,0,0.95)]">
+          <img
+            src={artworks[1]?.imageUrl || '/den-background.jpg'}
+            alt="Wall Artwork"
+            className="max-h-[56vh] w-auto max-w-full rounded object-contain shadow-2xl border border-amber-900"
+          />
+
+          <div className="w-full mt-3 pt-2 border-t border-amber-700/40 text-center space-y-0.5">
+            <h3 className="font-serif text-lg font-bold text-amber-100">
+              {artworks[1]?.title || 'Sanctum Twilight Heritage'}
+            </h3>
+            <p className="text-xs text-amber-300/80 font-serif italic">
+              Original Fine Oil & Gilded Varnish • Atelier Archive
+            </p>
           </div>
         </div>
       </div>
