@@ -24,15 +24,12 @@ const FALLBACK_ARTWORKS = [
   }
 ];
 
-// Precision zones mapped directly from monitor layout
 const INTERACTIVE_ZONES = [
   {
     id: 'laptop',
     label: 'Atelier Laptop',
     sub: 'Portfolio Exhibition',
-    // Hover trigger area
     box: { left: '57%', top: '61%', width: '6%', height: '11%' },
-    // Where the butterfly pops up
     pin: { left: '60%', top: '61%' }
   },
   {
@@ -53,7 +50,6 @@ const INTERACTIVE_ZONES = [
     id: 'easel',
     label: 'Studio Easel',
     sub: 'Work in Progress',
-    // Positioned on the tall lit canvas past the hearth
     box: { left: '80%', top: '38%', width: '12%', height: '28%' },
     pin: { left: '84.5%', top: '40%' }
   },
@@ -61,7 +57,6 @@ const INTERACTIVE_ZONES = [
     id: 'wallArt',
     label: 'Wall Masterpiece',
     sub: 'Permanent Collection',
-    // Centered over the portrait frame above hearth
     box: { left: '66%', top: '24%', width: '6.5%', height: '12%' },
     pin: { left: '69%', top: '25%' }
   }
@@ -77,6 +72,12 @@ export default function AtelierEngine() {
   const [soundOn, setSoundOn] = useState(false);
 
   const canvasRef = useRef(null);
+
+  // Return to room helper: clears any stuck hover state
+  const returnToRoom = () => {
+    setHoveredZone(null);
+    setActivePortal('room');
+  };
 
   useEffect(() => {
     try {
@@ -286,7 +287,7 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
-          {/* Clean Room: Hotspots only reveal their Butterfly Pin on hover */}
+          {/* Interactive Zones */}
           {activePortal === 'room' && (
             <div className="absolute inset-0 z-20">
               {INTERACTIVE_ZONES.map((zone) => {
@@ -296,7 +297,10 @@ export default function AtelierEngine() {
                     key={zone.id}
                     onMouseEnter={() => setHoveredZone(zone.id)}
                     onMouseLeave={() => setHoveredZone(null)}
-                    onClick={() => setActivePortal(zone.id)}
+                    onClick={() => {
+                      setHoveredZone(null);
+                      setActivePortal(zone.id);
+                    }}
                     style={{
                       left: zone.box.left,
                       top: zone.box.top,
@@ -305,7 +309,6 @@ export default function AtelierEngine() {
                     }}
                     className="absolute cursor-pointer"
                   >
-                    {/* The Butterfly Pin: Hidden by default, blooms in when hovering over object */}
                     <div
                       style={{
                         left: `calc(${zone.pin.left} - ${zone.box.left})`,
@@ -313,14 +316,12 @@ export default function AtelierEngine() {
                       }}
                       className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 ${
                         isHovered
-                          ? 'opacity-100 scale-100'
+                          ? 'opacity-100 scale-100 pointer-events-auto'
                           : 'opacity-0 scale-75'
                       }`}
                     >
-                      {/* Aura */}
                       <span className="absolute -inset-2 rounded-full bg-purple-500/40 animate-ping" />
 
-                      {/* Butterfly Orb Pin */}
                       <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-zinc-950/90 border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.9)] backdrop-blur-md">
                         <svg
                           viewBox="0 0 24 24"
@@ -330,7 +331,6 @@ export default function AtelierEngine() {
                         </svg>
                       </div>
 
-                      {/* Tooltip Badge */}
                       <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 flex flex-col items-center">
                         <div className="bg-zinc-950/95 border border-purple-400/70 px-3 py-1.5 rounded-lg shadow-[0_8px_25px_rgba(0,0,0,0.9)] whitespace-nowrap text-center">
                           <p className="text-xs font-serif font-bold text-purple-200 tracking-wider">
@@ -365,7 +365,7 @@ export default function AtelierEngine() {
             <div className="relative z-20 flex items-center justify-between px-5 py-2.5 border-b border-zinc-800 bg-zinc-900/95 text-zinc-300 text-xs backdrop-blur-md">
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setActivePortal('room')}
+                  onClick={returnToRoom}
                   title="Close laptop"
                   className="h-3.5 w-3.5 rounded-full bg-rose-500 hover:brightness-125 transition flex items-center justify-center text-[9px] text-zinc-950 font-black shadow"
                 >
@@ -377,7 +377,7 @@ export default function AtelierEngine() {
               </div>
 
               <button
-                onClick={() => setActivePortal('room')}
+                onClick={returnToRoom}
                 className="flex items-center gap-1.5 text-xs rounded-md bg-purple-950/70 hover:bg-purple-900 border border-purple-400/50 text-purple-200 px-3 py-1 font-medium transition shadow-sm"
               >
                 <ArrowLeft className="h-3.5 w-3.5"/>
@@ -466,7 +466,7 @@ export default function AtelierEngine() {
 
         <div className="w-full max-w-xl flex items-center justify-between mb-3 px-2 z-50">
           <button
-            onClick={() => setActivePortal('room')}
+            onClick={returnToRoom}
             className="flex items-center gap-2 rounded-full border border-amber-500/50 bg-black/85 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5"/>
@@ -564,7 +564,7 @@ export default function AtelierEngine() {
 
         <div className="w-full max-w-sm flex items-center justify-between mb-3 px-2 z-50">
           <button
-            onClick={() => setActivePortal('room')}
+            onClick={returnToRoom}
             className="flex items-center gap-2 rounded-full border border-purple-500/50 bg-black/85 px-4 py-1.5 text-xs font-semibold text-purple-200 shadow-xl hover:bg-zinc-900 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5"/>
@@ -671,7 +671,7 @@ export default function AtelierEngine() {
 
         <div className="w-full max-w-4xl flex items-center justify-between mb-4 z-50">
           <button
-            onClick={() => setActivePortal('room')}
+            onClick={returnToRoom}
             className="flex items-center gap-2 rounded-full border border-amber-500/50 bg-black/90 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5"/>
@@ -717,7 +717,7 @@ export default function AtelierEngine() {
 
         <div className="w-full max-w-3xl flex items-center justify-between mb-4 z-50">
           <button
-            onClick={() => setActivePortal('room')}
+            onClick={returnToRoom}
             className="flex items-center gap-2 rounded-full border border-amber-400/50 bg-black/90 px-4 py-1.5 text-xs font-semibold text-amber-200 shadow-xl hover:bg-zinc-900 transition"
           >
             <ArrowLeft className="h-3.5 w-3.5"/>
