@@ -274,10 +274,10 @@ export default function AtelierEngine() {
 
   const handlePasscodeSubmit = (e) => {
     e.preventDefault();
-    if (passcodeInput.trim() === DEV_KEY) {
+    if (passcodeInput.trim().toLowerCase() === DEV_KEY.toLowerCase()) {
       setShowPasscodeModal(false);
       setPasscodeInput('');
-      router.push('/studio');
+      window.location.href = '/studio';
     } else {
       setPasscodeError(true);
     }
