@@ -3,128 +3,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { 
-  ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
-  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, 
-  Frame
-} from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-
-const FALLBACK_ARTWORKS = [
-  {
-    id: 'f1',
-    title: 'Violet Metamorphosis',
-    imageUrl: '/Studio1.jpg',
-    medium: 'Digital Fine Art & Acrylic Base'
-  },
-  {
-    id: 'f2',
-    title: 'Sanctum Twilight',
-    imageUrl: '/den-background.jpg',
-    medium: 'Atelier Interior Study'
-  }
-];
-
-const STUDIO_PINS = [
-  {
-    id: 'laptop',
-    label: 'Atelier Laptop',
-    sub: 'Portfolio Exhibition',
-    x: '58.5%',
-    y: '62%'
-  },
-  {
-    id: 'sketchbook',
-    label: 'Drawing Pad',
-    sub: 'Graphite Studies',
-    x: '60%',
-    y: '77%'
-  },
-  {
-    id: 'phone',
-    label: 'Studio Phone',
-    sub: 'Commissions & Sanctum',
-    x: '64.5%',
-    y: '64%'
-  },
-  {
-    id: 'easel',
-    label: 'Studio Easel',
-    sub: 'Work in Progress',
-    x: '75%',
-    y: '48%'
-  },
-  {
-    id: 'wallArt',
-    label: 'Wall Masterpiece',
-    sub: 'Permanent Collection',
-    x: '66%',
-    y: '27%'
-  }
-];
-
-export default function AtelierEngine() {
-  const [activePortal, setActivePortal] = useState('room');
-  const [artworks, setArtworks] = useState([]);
-  const [artIdx, setArtIdx] = useState(0);
-  const [sketchIdx, setSketchIdx] = useState(0);
-  const [pageFlipping, setPageFlipping] = useState(false);
-  const [soundOn, setSoundOn] = useState(false);
-
-  const canvasRef = useRef(null);
-  const audioCtxRef = useRef(null);
-
-  useEffect(() => {
-    try {
-      const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(
-        q,
-        (snap) => {
-          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          setArtworks(docs.length > 0 ? docs : FALLBACK_ARTWORKS);
-        },
-        () => setArtworks(FALLBACK_ARTWORKS)
-      );
-      return () => unsub();
-    } catch {
-      setArtworks(FALLBACK_ARTWORKS);
-    }
-  }, []);
-
-  const toggleSound = () => {
-    if (!soundOn) {
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioContext();
-        audioCtxRef.current = ctx;
-
-        const bufferSize = ctx.sampleRate * 2;
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
-        for (let i = 0; i < bufferSize; i++) {
-          const white = Math.random() * 2 - 1;
-          b0 = 0.99886 * b0 + white * 0.0555179;
-          b1 = 0.99332 * b1 + white * 0.0750759;
-          b2 = 0.96900 * b2 + white * 0.1538520;
-          b3 = 0.86650 * b3 + white * 0.3104856;
-          b4 = 0.55000 * b4 + white * 0.5329522;
-          b5 = -0.7616 * b5 - white * 0The Vercel log shows exactly what broke: in line 133 of `app/page.jsx`, conversational text (`b5I remember the exact... Your idea to scrap the giant boxe...`) got copied directly into the file. Because raw prose landed inside the JavaScript audio formula, Next.js threw a build syntax error.
-
-The audio synth math is also unnecessary overhead that invites file errors. Replacing that with a simple ambient audio player keeps the file clean and robust.
-
-Run this terminal block to replace `app/page.jsx` with a verified build that has the new Butterfly Pins and zero corrupt text:
-
-```bash
-cat << 'EOF' > app/page.jsx
-'use client';
-
-import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { 
-  ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
-  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, 
-  Frame
+  ArrowLeft, ChevronLeft, ChevronRight, Sparkles, 
+  Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, Frame 
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -689,7 +569,7 @@ export default function AtelierEngine() {
 
               <div className="space-y-2 pt-2">
                 <a
-                  href="[https://www.tiktok.com/@mindseyebutterfly](https://www.tiktok.com/@mindseyebutterfly)"
+                  href="https://www.tiktok.com/@mindseyebutterfly"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-800 p-3 hover:border-purple-500/50 transition group"
