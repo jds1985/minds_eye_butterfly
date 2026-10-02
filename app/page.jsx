@@ -310,17 +310,15 @@ export default function AtelierEngine() {
       
       {/* Centered Logo Header */}
       <header
-        className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-center p-4 transition-all duration-700 pointer-events-none ${
+        className={`absolute top-2 sm:top-4 left-0 right-0 z-40 flex items-center justify-center pointer-events-none transition-all duration-700 ${
           activePortal !== "room" ? "opacity-0 -translate-y-8" : "opacity-100 translate-y-0"
         }`}
       >
-        <div className="relative flex items-center justify-center px-6 py-2 rounded-2xl bg-zinc-950/80 border border-purple-500/30 backdrop-blur-md shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_20px_rgba(168,85,247,0.25)]">
-          <img
-            src="/Minds_eye_butterfly.png"
-            alt="Minds Eye Butterfly"
-            className="h-14 sm:h-16 w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-          />
-        </div>
+        <img
+          src="/Minds_eye_butterfly.png"
+          alt="Minds Eye Butterfly"
+          className="h-12 sm:h-16 w-auto object-contain drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)]"
+        />
       </header>
 
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
