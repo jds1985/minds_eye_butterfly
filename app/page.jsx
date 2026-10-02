@@ -73,7 +73,6 @@ export default function AtelierEngine() {
 
   const canvasRef = useRef(null);
 
-  // Return to room helper: clears any stuck hover state
   const returnToRoom = () => {
     setHoveredZone(null);
     setActivePortal('room');
@@ -96,20 +95,38 @@ export default function AtelierEngine() {
     }
   }, []);
 
+  // Realistic Living Hearth & Crow Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let animationId;
-    const embers = Array.from({ length: 30 }, () => ({
-      x: 1350 + (Math.random() * 100 - 50),
-      y: 650 + Math.random() * 60,
-      size: Math.random() * 2.5 + 1,
-      speedY: Math.random() * 1.5 + 0.6,
-      speedX: (Math.random() - 0.5) * 0.8,
-      life: Math.random() * 1,
-      decay: Math.random() * 0.012 + 0.006,
+    let time = 0;
+
+    // Organic rising flame particles (the tongues of fire)
+    const flames = Array.from({ length: 22 }, () => ({
+      x: 1350 + (Math.random() * 80 - 40),
+      baseX: 1350 + (Math.random() * 80 - 40),
+      y: 650 + Math.random() * 20,
+      radius: Math.random() * 18 + 14,
+      speedY: Math.random() * 1.8 + 1.2,
+      life: Math.random(),
+      decay: Math.random() * 0.02 + 0.015,
+      wobbleSpeed: Math.random() * 0.08 + 0.04,
+      wobbleAmp: Math.random() * 14 + 6,
+    }));
+
+    // Crackling embers / sparks with draft turbulence
+    const embers = Array.from({ length: 35 }, () => ({
+      x: 1350 + (Math.random() * 90 - 45),
+      y: 640 + Math.random() * 30,
+      size: Math.random() * 2.2 + 0.8,
+      speedY: Math.random() * 2.4 + 1.2,
+      speedX: (Math.random() - 0.5) * 1.2,
+      life: Math.random(),
+      decay: Math.random() * 0.014 + 0.007,
+      turbulence: Math.random() * 0.05 + 0.02,
     }));
 
     const crows = [
@@ -146,7 +163,9 @@ export default function AtelierEngine() {
 
     const render = () => {
       ctx.clearRect(0, 0, 1920, 1080);
+      time += 0.03;
 
+      // 1. Crows in window
       ctx.save();
       ctx.beginPath();
       ctx.rect(340, 210, 520, 260);
@@ -163,31 +182,101 @@ export default function AtelierEngine() {
       });
       ctx.restore();
 
-      const flicker = 0.85 + Math.sin(Date.now() * 0.008) * 0.08 + Math.random() * 0.07;
-      const fireGrad = ctx.createRadialGradient(1350, 640, 10, 1350, 640, 240);
-      fireGrad.addColorStop(0, `rgba(255, 140, 0, ${0.45 * flicker})`);
-      fireGrad.addColorStop(0.4, `rgba(234, 88, 12, ${0.25 * flicker})`);
-      fireGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      // 2. Multi-Frequency Ambient Fireplace Glow
+      const f1 = Math.sin(time * 3.2) * 0.05;
+      const f2 = Math.cos(time * 7.1) * 0.04;
+      const f3 = (Math.random() - 0.5) * 0.05;
+      const hearthIntensity = 0.85 + f1 + f2 + f3;
 
-      ctx.fillStyle = fireGrad;
+      // Deep room wash
+      const ambientGlow = ctx.createRadialGradient(
+        1350, 640, 30,
+        1350, 630, 290 * hearthIntensity
+      );
+      ambientGlow.addColorStop(0, `rgba(255, 120, 10, ${0.45 * hearthIntensity})`);
+      ambientGlow.addColorStop(0.35, `rgba(215, 60, 5, ${0.22 * hearthIntensity})`);
+      ambientGlow.addColorStop(0.7, `rgba(140, 25, 0, ${0.08 * hearthIntensity})`);
+      ambientGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = ambientGlow;
       ctx.beginPath();
-      ctx.arc(1350, 640, 240, 0, Math.PI * 2);
+      ctx.arc(1350, 640, 300, 0, Math.PI * 2);
       ctx.fill();
 
-      embers.forEach((p) => {
-        p.y -= p.speedY;
-        p.x += p.speedX;
-        p.life -= p.decay;
-        if (p.life <= 0 || p.y < 460) {
-          p.x = 1350 + (Math.random() * 90 - 45);
-          p.y = 660 + Math.random() * 20;
-          p.life = 1;
+      // 3. Fluid Flame Tendrils (Additive Blend)
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+
+      flames.forEach((f) => {
+        f.y -= f.speedY;
+        f.life -= f.decay;
+        f.x = f.baseX + Math.sin(time * 5 + f.y * f.wobbleSpeed) * f.wobbleAmp;
+
+        if (f.life <= 0 || f.y < 540) {
+          f.life = 1;
+          f.baseX = 1350 + (Math.random() * 80 - 40);
+          f.x = f.baseX;
+          f.y = 650 + Math.random() * 15;
+          f.radius = Math.random() * 18 + 14;
         }
-        ctx.fillStyle = `rgba(255, 200, 100, ${p.life * 0.9})`;
+
+        const currentRad = f.radius * f.life;
+        const flameGrad = ctx.createRadialGradient(
+          f.x, f.y, 0,
+          f.x, f.y, Math.max(1, currentRad)
+        );
+
+        // Shifts from white-hot center to deep orange edge as it rises
+        flameGrad.addColorStop(0, `rgba(255, 245, 200, ${f.life * 0.85})`);
+        flameGrad.addColorStop(0.3, `rgba(255, 160, 20, ${f.life * 0.65})`);
+        flameGrad.addColorStop(0.7, `rgba(220, 50, 0, ${f.life * 0.35})`);
+        flameGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = flameGrad;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(f.x, f.y, Math.max(1, currentRad), 0, Math.PI * 2);
         ctx.fill();
       });
+
+      // 4. White-Hot Log Core
+      const coreGrad = ctx.createRadialGradient(
+        1350, 655, 5,
+        1350, 655, 55 * hearthIntensity
+      );
+      coreGrad.addColorStop(0, `rgba(255, 255, 220, ${0.9 * hearthIntensity})`);
+      coreGrad.addColorStop(0.4, `rgba(255, 190, 40, ${0.7 * hearthIntensity})`);
+      coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      ctx.fillStyle = coreGrad;
+      ctx.beginPath();
+      ctx.ellipse(1350, 655, 55, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 5. Rising Crackling Embers with Draft Turbulence
+      embers.forEach((p) => {
+        p.y -= p.speedY;
+        p.x += p.speedX + Math.sin(p.y * p.turbulence) * 0.9;
+        p.life -= p.decay;
+
+        if (p.life <= 0 || p.y < 440) {
+          p.x = 1350 + (Math.random() * 80 - 40);
+          p.y = 650 + Math.random() * 20;
+          p.life = 1;
+          p.speedY = Math.random() * 2.4 + 1.2;
+        }
+
+        // Color shifts from yellow spark to dull ember as it climbs
+        const r = 255;
+        const g = Math.floor(150 + p.life * 90);
+        const b = Math.floor(40 + p.life * 60);
+
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.life * 0.95})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * (0.5 + p.life * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
 
       animationId = requestAnimationFrame(render);
     };
