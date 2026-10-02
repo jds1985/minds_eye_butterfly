@@ -310,26 +310,31 @@ export default function AtelierEngine() {
       
       {/* Centered Logo Header */}
       <header
-        className={`absolute top-2 left-0 right-0 z-40 flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${
+        className={`absolute top-1 sm:top-2 left-0 right-0 z-40 flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${
           activePortal !== "room" ? "opacity-0 -translate-y-8" : "opacity-100 translate-y-0"
         }`}
       >
-        <div className="flex flex-col items-center justify-center gap-1 select-none">
-          <h1 className="font-serif text-lg sm:text-2xl font-semibold tracking-[0.28em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-300 drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] uppercase">
-            Minds Eye Butterfly
-          </h1>
+        <div className="flex flex-col items-center justify-center select-none px-4">
+          <div className="flex items-center justify-center gap-3 sm:gap-6">
+            <span className="font-serif italic font-normal text-2xl sm:text-4xl tracking-wide bg-gradient-to-r from-violet-300 via-fuchsia-300 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(192,132,252,0.6)]">
+              Minds Eye
+            </span>
 
-          <div className="flex items-center justify-center gap-3">
-            <span className="w-12 sm:w-20 h-[1px] bg-gradient-to-r from-transparent to-amber-400/50" />
-            <img
-              src="/Minds_eye_butterfly.png"
-              alt="Minds Eye Butterfly Logo"
-              className="h-9 sm:h-12 w-auto object-contain drop-shadow-[0_2px_10px_rgba(217,119,6,0.4)]"
-            />
-            <span className="w-12 sm:w-20 h-[1px] bg-gradient-to-l from-transparent to-amber-400/50" />
+            <div className="relative -my-2 flex items-center justify-center">
+              <div className="absolute inset-0 bg-fuchsia-500/20 blur-xl rounded-full" />
+              <img
+                src="/Minds_eye_butterfly.png"
+                alt="Minds Eye Butterfly Logo"
+                className="relative h-14 sm:h-20 w-auto object-contain drop-shadow-[0_4px_16px_rgba(236,72,153,0.45)] hover:scale-105 transition-transform"
+              />
+            </div>
+
+            <span className="font-serif italic font-normal text-2xl sm:text-4xl tracking-wide bg-gradient-to-r from-amber-200 via-rose-300 to-violet-300 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(244,114,182,0.6)]">
+              Butterfly
+            </span>
           </div>
 
-          <p className="font-mono text-[8px] sm:text-[9px] tracking-[0.35em] text-amber-300/70 uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+          <p className="font-mono text-[8px] sm:text-[9px] tracking-[0.35em] text-zinc-400 uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] mt-0.5">
             Living Atelier & Archival Sanctuary
           </p>
         </div>
