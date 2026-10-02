@@ -6,20 +6,19 @@ import {
   ArrowLeft, ChevronLeft, ChevronRight, Sparkles, 
   Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, Frame 
 } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { supabase } from '@/lib/supabase';
 
 const FALLBACK_ARTWORKS = [
   {
     id: 'f1',
     title: 'Violet Metamorphosis',
-    imageUrl: '/Studio1.jpg',
+    image_url: '/Studio1.jpg',
     medium: 'Digital Fine Art & Acrylic Base'
   },
   {
     id: 'f2',
     title: 'Sanctum Twilight',
-    imageUrl: '/den-background.jpg',
+    image_url: '/den-background.jpg',
     medium: 'Atelier Interior Study'
   }
 ];
@@ -65,7 +64,7 @@ const INTERACTIVE_ZONES = [
 export default function AtelierEngine() {
   const [activePortal, setActivePortal] = useState('room');
   const [hoveredZone, setHoveredZone] = useState(null);
-  const [artworks, setArtworks] = useState([]);
+  const [artworks, setArtworks] = useState(FALLBACK_ARTWORKS);
   const [artIdx, setArtIdx] = useState(0);
   const [sketchIdx, setSketchIdx] = useState(0);
   const [pageFlipping, setPageFlipping] = useState(false);
@@ -78,24 +77,26 @@ export default function AtelierEngine() {
     setActivePortal('room');
   };
 
+  // Fetch live artworks from Supabase
   useEffect(() => {
-    try {
-      const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
-      const unsub = onSnapshot(
-        q,
-        (snap) => {
-          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-          setArtworks(docs.length > 0 ? docs : FALLBACK_ARTWORKS);
-        },
-        () => setArtworks(FALLBACK_ARTWORKS)
-      );
-      return () => unsub();
-    } catch {
-      setArtworks(FALLBACK_ARTWORKS);
+    async function loadArt() {
+      try {
+        const { data, error } = await supabase
+          .from('artworks')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setArtworks(data);
+        }
+      } catch (err) {
+        console.error('Supabase fetch error, using fallbacks:', err);
+      }
     }
+    loadArt();
   }, []);
 
-  // Realistic Living Hearth & Crow Engine
+  // Living Hearth & Crows Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -104,7 +105,6 @@ export default function AtelierEngine() {
     let animationId;
     let time = 0;
 
-    // Organic rising flame particles (the tongues of fire)
     const flames = Array.from({ length: 22 }, () => ({
       x: 1350 + (Math.random() * 80 - 40),
       baseX: 1350 + (Math.random() * 80 - 40),
@@ -117,7 +117,6 @@ export default function AtelierEngine() {
       wobbleAmp: Math.random() * 14 + 6,
     }));
 
-    // Crackling embers / sparks with draft turbulence
     const embers = Array.from({ length: 35 }, () => ({
       x: 1350 + (Math.random() * 90 - 45),
       y: 640 + Math.random() * 30,
@@ -165,7 +164,6 @@ export default function AtelierEngine() {
       ctx.clearRect(0, 0, 1920, 1080);
       time += 0.03;
 
-      // 1. Crows in window
       ctx.save();
       ctx.beginPath();
       ctx.rect(340, 210, 520, 260);
@@ -182,13 +180,10 @@ export default function AtelierEngine() {
       });
       ctx.restore();
 
-      // 2. Multi-Frequency Ambient Fireplace Glow
       const f1 = Math.sin(time * 3.2) * 0.05;
       const f2 = Math.cos(time * 7.1) * 0.04;
-      const f3 = (Math.random() - 0.5) * 0.05;
-      const hearthIntensity = 0.85 + f1 + f2 + f3;
+      const hearthIntensity = 0.85 + f1 + f2;
 
-      // Deep room wash
       const ambientGlow = ctx.createRadialGradient(
         1350, 640, 30,
         1350, 630, 290 * hearthIntensity
@@ -203,7 +198,6 @@ export default function AtelierEngine() {
       ctx.arc(1350, 640, 300, 0, Math.PI * 2);
       ctx.fill();
 
-      // 3. Fluid Flame Tendrils (Additive Blend)
       ctx.save();
       ctx.globalCompositeOperation = 'screen';
 
@@ -225,8 +219,6 @@ export default function AtelierEngine() {
           f.x, f.y, 0,
           f.x, f.y, Math.max(1, currentRad)
         );
-
-        // Shifts from white-hot center to deep orange edge as it rises
         flameGrad.addColorStop(0, `rgba(255, 245, 200, ${f.life * 0.85})`);
         flameGrad.addColorStop(0.3, `rgba(255, 160, 20, ${f.life * 0.65})`);
         flameGrad.addColorStop(0.7, `rgba(220, 50, 0, ${f.life * 0.35})`);
@@ -238,21 +230,15 @@ export default function AtelierEngine() {
         ctx.fill();
       });
 
-      // 4. White-Hot Log Core
-      const coreGrad = ctx.createRadialGradient(
-        1350, 655, 5,
-        1350, 655, 55 * hearthIntensity
-      );
+      const coreGrad = ctx.createRadialGradient(1350, 655, 5, 1350, 655, 55 * hearthIntensity);
       coreGrad.addColorStop(0, `rgba(255, 255, 220, ${0.9 * hearthIntensity})`);
       coreGrad.addColorStop(0.4, `rgba(255, 190, 40, ${0.7 * hearthIntensity})`);
       coreGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
       ctx.fillStyle = coreGrad;
       ctx.beginPath();
       ctx.ellipse(1350, 655, 55, 20, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // 5. Rising Crackling Embers with Draft Turbulence
       embers.forEach((p) => {
         p.y -= p.speedY;
         p.x += p.speedX + Math.sin(p.y * p.turbulence) * 0.9;
@@ -262,22 +248,15 @@ export default function AtelierEngine() {
           p.x = 1350 + (Math.random() * 80 - 40);
           p.y = 650 + Math.random() * 20;
           p.life = 1;
-          p.speedY = Math.random() * 2.4 + 1.2;
         }
 
-        // Color shifts from yellow spark to dull ember as it climbs
-        const r = 255;
-        const g = Math.floor(150 + p.life * 90);
-        const b = Math.floor(40 + p.life * 60);
-
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${p.life * 0.95})`;
+        ctx.fillStyle = `rgba(255, ${Math.floor(150 + p.life * 90)}, 40, ${p.life * 0.95})`;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size * (0.5 + p.life * 0.5), 0, Math.PI * 2);
         ctx.fill();
       });
 
       ctx.restore();
-
       animationId = requestAnimationFrame(render);
     };
 
@@ -376,7 +355,7 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
-          {/* Interactive Zones */}
+          {/* Interactive Object Pins */}
           {activePortal === 'room' && (
             <div className="absolute inset-0 z-20">
               {INTERACTIVE_ZONES.map((zone) => {
@@ -495,7 +474,7 @@ export default function AtelierEngine() {
                 <div className="relative h-full max-h-[46vh] w-full max-w-3xl flex items-center justify-center">
                   <img
                     key={currentArt?.id}
-                    src={currentArt?.imageUrl}
+                    src={currentArt?.image_url || currentArt?.imageUrl}
                     alt={currentArt?.title}
                     className="max-h-full max-w-full rounded-lg object-contain border border-zinc-700/80 shadow-[0_12px_40px_rgba(0,0,0,0.9)] animate-in fade-in zoom-in-95 duration-300"
                   />
@@ -520,7 +499,7 @@ export default function AtelierEngine() {
                         : 'border-zinc-700 opacity-60 hover:opacity-100'
                     }`}
                   >
-                    <img src={item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
+                    <img src={item.image_url || item.imageUrl} alt={item.title} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -610,7 +589,7 @@ export default function AtelierEngine() {
               <div className="relative flex-1 my-3 rounded-xl border border-stone-300 bg-[#efe4d2] p-2 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-amber-600/50 transition">
                 <img
                   key={currentSketch?.id}
-                  src={currentSketch?.imageUrl}
+                  src={currentSketch?.image_url || currentSketch?.imageUrl}
                   alt={currentSketch?.title}
                   className="max-h-full max-w-full rounded object-contain filter contrast-105 shadow-md transition-transform duration-500 group-hover:scale-[1.02]"
                 />
@@ -724,14 +703,17 @@ export default function AtelierEngine() {
                   <Send className="h-3.5 w-3.5 text-zinc-500 group-hover:text-purple-400 transition"/>
                 </a>
 
-                <Link className="flex items-center justify-between rounded-xl bg-purple-600/90 p-3 hover:bg-purple-600 transition group shadow-lg shadow-purple-600/30" href="/studio">
+                <Link 
+                  href="/studio"
+                  className="flex items-center justify-between rounded-xl bg-purple-600/90 p-3 hover:bg-purple-600 transition group shadow-lg shadow-purple-600/30"
+                >
                   <div className="flex items-center gap-2.5 text-xs text-white">
                     <div className="p-1.5 rounded-lg bg-white/20 text-white">
                       <Palette className="h-4 w-4"/>
                     </div>
                     <div className="text-left">
                       <div className="font-bold">Sanctum Admin Portal</div>
-                      <div className="text-[9px] text-purple-200">Upload new creations</div>
+                      <div className="text-[9px] text-purple-200">Upload & banish artworks</div>
                     </div>
                   </div>
                   <Send className="h-3.5 w-3.5 text-white/80 group-hover:translate-x-0.5 transition"/>
@@ -775,7 +757,7 @@ export default function AtelierEngine() {
 
         <div className="relative max-h-[76vh] max-w-3xl flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-stone-800 via-stone-900 to-black border-4 border-amber-800/70 shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
           <img
-            src={artworks[0]?.imageUrl || '/Studio1.jpg'}
+            src={artworks[0]?.image_url || artworks[0]?.imageUrl || '/Studio1.jpg'}
             alt="Easel Artwork"
             className="max-h-[58vh] w-auto max-w-full rounded-lg object-contain shadow-2xl border border-stone-700"
           />
@@ -821,7 +803,7 @@ export default function AtelierEngine() {
 
         <div className="relative max-h-[76vh] max-w-2xl flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-amber-950/80 via-stone-900 to-black border-[6px] border-amber-600/80 shadow-[0_30px_70px_rgba(0,0,0,0.95)]">
           <img
-            src={artworks[1]?.imageUrl || '/den-background.jpg'}
+            src={artworks[1]?.image_url || artworks[1]?.imageUrl || '/den-background.jpg'}
             alt="Wall Artwork"
             className="max-h-[56vh] w-auto max-w-full rounded object-contain shadow-2xl border border-amber-900"
           />
