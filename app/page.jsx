@@ -317,7 +317,7 @@ export default function AtelierEngine() {
         <img
           src="/Minds_eye_butterfly.png"
           alt="Minds Eye Butterfly"
-          className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] filter brightness-110"
+          className="h-16 sm:h-20 w-auto object-contain mix-blend-screen filter drop-shadow-[0_0_12px_rgba(192,132,252,0.6)]"
         />
       </header>
 
