@@ -24,46 +24,52 @@ const FALLBACK_ARTWORKS = [
   }
 ];
 
-const STUDIO_PINS = [
+// Precision zones mapped directly from monitor layout
+const INTERACTIVE_ZONES = [
   {
     id: 'laptop',
     label: 'Atelier Laptop',
     sub: 'Portfolio Exhibition',
-    x: '58.5%',
-    y: '62%'
+    // Hover trigger area
+    box: { left: '57%', top: '61%', width: '6%', height: '11%' },
+    // Where the butterfly pops up
+    pin: { left: '60%', top: '61%' }
   },
   {
     id: 'sketchbook',
     label: 'Drawing Pad',
     sub: 'Graphite Studies',
-    x: '60%',
-    y: '77%'
+    box: { left: '56%', top: '75%', width: '16%', height: '18%' },
+    pin: { left: '62.5%', top: '75%' }
   },
   {
     id: 'phone',
     label: 'Studio Phone',
     sub: 'Commissions & Sanctum',
-    x: '64.5%',
-    y: '64%'
+    box: { left: '64.5%', top: '63%', width: '3.5%', height: '7%' },
+    pin: { left: '66.2%', top: '63.5%' }
   },
   {
     id: 'easel',
     label: 'Studio Easel',
     sub: 'Work in Progress',
-    x: '75%',
-    y: '48%'
+    // Positioned on the tall lit canvas past the hearth
+    box: { left: '80%', top: '38%', width: '12%', height: '28%' },
+    pin: { left: '84.5%', top: '40%' }
   },
   {
     id: 'wallArt',
     label: 'Wall Masterpiece',
     sub: 'Permanent Collection',
-    x: '66%',
-    y: '27%'
+    // Centered over the portrait frame above hearth
+    box: { left: '66%', top: '24%', width: '6.5%', height: '12%' },
+    pin: { left: '69%', top: '25%' }
   }
 ];
 
 export default function AtelierEngine() {
   const [activePortal, setActivePortal] = useState('room');
+  const [hoveredZone, setHoveredZone] = useState(null);
   const [artworks, setArtworks] = useState([]);
   const [artIdx, setArtIdx] = useState(0);
   const [sketchIdx, setSketchIdx] = useState(0);
@@ -243,15 +249,15 @@ export default function AtelierEngine() {
           style={{
             transformOrigin:
               activePortal === 'laptop'
-                ? '59% 62%'
+                ? '60% 63%'
                 : activePortal === 'sketchbook'
-                ? '61% 86%'
+                ? '62% 82%'
                 : activePortal === 'phone'
-                ? '63.5% 65%'
+                ? '66% 65%'
                 : activePortal === 'easel'
-                ? '75% 48%'
+                ? '84% 50%'
                 : activePortal === 'wallArt'
-                ? '66% 27%'
+                ? '68% 28%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
@@ -280,39 +286,66 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
+          {/* Clean Room: Hotspots only reveal their Butterfly Pin on hover */}
           {activePortal === 'room' && (
-            <div className="absolute inset-0 pointer-events-none">
-              {STUDIO_PINS.map((pin) => (
-                <div
-                  key={pin.id}
-                  onClick={() => setActivePortal(pin.id)}
-                  style={{ left: pin.x, top: pin.y }}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer group z-30"
-                >
-                  <span className="absolute -inset-2 rounded-full bg-purple-500/35 animate-ping opacity-60 group-hover:opacity-100" />
-
-                  <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-zinc-950/85 border border-purple-400/70 shadow-[0_0_18px_rgba(168,85,247,0.7)] backdrop-blur-md transition-all duration-300 group-hover:scale-125 group-hover:border-purple-300 group-hover:bg-purple-950">
-                    <svg
-                      viewBox="0 0 24 24"
-                      className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] transition-transform duration-300 group-hover:rotate-12"
+            <div className="absolute inset-0 z-20">
+              {INTERACTIVE_ZONES.map((zone) => {
+                const isHovered = hoveredZone === zone.id;
+                return (
+                  <div
+                    key={zone.id}
+                    onMouseEnter={() => setHoveredZone(zone.id)}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    onClick={() => setActivePortal(zone.id)}
+                    style={{
+                      left: zone.box.left,
+                      top: zone.box.top,
+                      width: zone.box.width,
+                      height: zone.box.height,
+                    }}
+                    className="absolute cursor-pointer"
+                  >
+                    {/* The Butterfly Pin: Hidden by default, blooms in when hovering over object */}
+                    <div
+                      style={{
+                        left: `calc(${zone.pin.left} - ${zone.box.left})`,
+                        top: `calc(${zone.pin.top} - ${zone.box.top})`,
+                      }}
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 ${
+                        isHovered
+                          ? 'opacity-100 scale-100'
+                          : 'opacity-0 scale-75'
+                      }`}
                     >
-                      <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z"/>
-                    </svg>
-                  </div>
+                      {/* Aura */}
+                      <span className="absolute -inset-2 rounded-full bg-purple-500/40 animate-ping" />
 
-                  <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none transition-all duration-200">
-                    <div className="bg-zinc-950/95 border border-purple-400/60 px-3 py-1.5 rounded-lg shadow-[0_8px_25px_rgba(0,0,0,0.9)] whitespace-nowrap text-center">
-                      <p className="text-xs font-serif font-bold text-purple-200 tracking-wider">
-                        {pin.label}
-                      </p>
-                      <p className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">
-                        {pin.sub}
-                      </p>
+                      {/* Butterfly Orb Pin */}
+                      <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-zinc-950/90 border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.9)] backdrop-blur-md">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] animate-pulse"
+                        >
+                          <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z"/>
+                        </svg>
+                      </div>
+
+                      {/* Tooltip Badge */}
+                      <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 flex flex-col items-center">
+                        <div className="bg-zinc-950/95 border border-purple-400/70 px-3 py-1.5 rounded-lg shadow-[0_8px_25px_rgba(0,0,0,0.9)] whitespace-nowrap text-center">
+                          <p className="text-xs font-serif font-bold text-purple-200 tracking-wider">
+                            {zone.label}
+                          </p>
+                          <p className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">
+                            {zone.sub}
+                          </p>
+                        </div>
+                        <div className="w-2 h-2 bg-zinc-950 border-r border-b border-purple-400/70 rotate-45 -mt-1" />
+                      </div>
                     </div>
-                    <div className="w-2 h-2 bg-zinc-950 border-r border-b border-purple-400/60 rotate-45 -mt-1" />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
