@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
-  Volume2, VolumeX, Wifi, Battery 
+  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette 
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -24,7 +25,7 @@ const FALLBACK_ARTWORKS = [
 ];
 
 export default function AtelierEngine() {
-  const [activePortal, setActivePortal] = useState('room'); // 'room' | 'laptop' | 'sketchbook'
+  const [activePortal, setActivePortal] = useState('room'); // 'room' | 'laptop' | 'sketchbook' | 'phone'
   const [artworks, setArtworks] = useState([]);
   const [artIdx, setArtIdx] = useState(0);
   const [sketchIdx, setSketchIdx] = useState(0);
@@ -157,10 +158,7 @@ export default function AtelierEngine() {
         </button>
       </header>
 
-      {/* 
-        VIRTUAL 1920x1080 STAGE:
-        Maintains fixed aspect ratio across all displays.
-      */}
+      {/* VIRTUAL 1920x1080 STAGE */}
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
         
         {/* Dynamic Camera Matrix Layer */}
@@ -172,12 +170,16 @@ export default function AtelierEngine() {
                 ? '59% 62%'
                 : activePortal === 'sketchbook'
                 ? '61% 86%'
+                : activePortal === 'phone'
+                ? '64% 65%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
                 ? 'scale(5.6)'
                 : activePortal === 'sketchbook'
                 ? 'scale(3.8)'
+                : activePortal === 'phone'
+                ? 'scale(5.2)'
                 : 'scale(1)',
           }}
         >
@@ -232,6 +234,27 @@ export default function AtelierEngine() {
               <div className="h-full w-full rounded-lg transition-all duration-300 group-hover:bg-amber-500/15 group-hover:ring-1 group-hover:ring-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.3)]" />
               <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-500/40 px-2 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
                 Open Sketchbook
+              </div>
+            </div>
+          )}
+
+          {/* HOTSPOT 3: SMARTPHONE BESIDE LAPTOP */}
+          {activePortal === 'room' && (
+            <div
+              onClick={() => setActivePortal('phone')}
+              className="absolute z-20 cursor-pointer group"
+              style={{
+                top: '61.5%',
+                left: '63.2%',
+                width: '3.2%',
+                height: '7.5%',
+                transform: 'rotate(-8deg)',
+              }}
+              title="Check Smartphone"
+            >
+              <div className="h-full w-full rounded transition-all duration-300 group-hover:bg-purple-500/20 group-hover:ring-1 group-hover:ring-purple-400/50 shadow-[0_0_15px_rgba(168,85,247,0.4)]" />
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-purple-500/40 px-2 py-0.5 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
+                Studio Phone
               </div>
             </div>
           )}
@@ -352,7 +375,6 @@ export default function AtelierEngine() {
       >
         <div className="absolute w-[600px] h-[600px] rounded-full bg-amber-600/15 blur-3xl pointer-events-none" />
 
-        {/* Top Control Header */}
         <div className="w-full max-w-xl flex items-center justify-between mb-3 px-2 z-50">
           <button
             onClick={() => setActivePortal('room')}
@@ -367,7 +389,6 @@ export default function AtelierEngine() {
           </span>
         </div>
 
-        {/* Portrait Pad Stage */}
         <div className="relative flex items-center justify-center">
           <button
             onClick={prevSketch}
@@ -387,7 +408,6 @@ export default function AtelierEngine() {
             <div className="absolute inset-0 bg-gradient-to-b from-stone-900/[0.08] via-transparent to-stone-900/[0.05] pointer-events-none z-20" />
             <div className="absolute inset-0 bg-[radial-gradient(#0000000d_1px,transparent_1px)] [background-size:12px_12px] pointer-events-none z-20" />
 
-            {/* TOP WIRE SPIRAL */}
             <div className="relative w-full h-11 bg-[#dfd4be] border-b border-[#bfae94] flex items-center justify-evenly px-4 shadow-inner z-30">
               {[...Array(16)].map((_, i) => (
                 <div key={i} className="relative flex flex-col items-center">
@@ -399,7 +419,6 @@ export default function AtelierEngine() {
 
             <div className="w-full border-b border-dashed border-stone-400/80 pointer-events-none" />
 
-            {/* Main Portrait Sketch Area */}
             <div className="relative flex-1 p-6 sm:p-8 flex flex-col justify-between overflow-hidden">
               <div className="flex items-center justify-between border-b border-stone-300 pb-2">
                 <span className="font-mono text-[10px] tracking-widest uppercase text-stone-500 font-bold">
@@ -443,6 +462,122 @@ export default function AtelierEngine() {
           >
             <ChevronRight className="h-7 w-7" />
           </button>
+        </div>
+      </div>
+
+      {/* ======================= SMARTPHONE PORTAL ======================= */}
+      <div
+        className={`absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-black/80 backdrop-blur-md transition-all duration-700 pointer-events-none ${
+          activePortal === 'phone' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
+        }`}
+      >
+        <div className="absolute w-[500px] h-[500px] rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-sm flex items-center justify-between mb-3 px-2 z-50">
+          <button
+            onClick={() => setActivePortal('room')}
+            className="flex items-center gap-2 rounded-full border border-purple-500/50 bg-black/85 px-4 py-1.5 text-xs font-semibold text-purple-200 shadow-xl hover:bg-zinc-900 transition"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Put Down Phone</span>
+          </button>
+          <span className="text-[10px] font-mono tracking-widest text-purple-300 uppercase">
+            Atelier Mobile
+          </span>
+        </div>
+
+        {/* Realistic Smartphone Chassis */}
+        <div className="relative w-full max-w-[340px] h-[78vh] max-h-[700px] rounded-[44px] p-3 bg-gradient-to-b from-zinc-700 via-zinc-850 to-zinc-950 border-[3px] border-zinc-600 shadow-[0_25px_60px_rgba(0,0,0,0.95)] flex flex-col justify-between overflow-hidden">
+          <div className="relative flex-1 rounded-[36px] bg-zinc-950 border border-zinc-800 overflow-hidden flex flex-col justify-between p-4 text-white">
+            
+            {/* Dynamic Island / Speaker Notch */}
+            <div className="absolute top-2.5 left-1/2 -translate-x-1/2 h-5 w-24 rounded-full bg-black border border-zinc-800/80 z-50 flex items-center justify-end px-2">
+              <div className="h-2 w-2 rounded-full bg-zinc-900 ring-1 ring-zinc-700" />
+            </div>
+
+            {/* Mobile Status Bar */}
+            <div className="flex items-center justify-between text-[11px] font-medium text-zinc-400 pt-1 px-3 z-40">
+              <span>9:41</span>
+              <div className="flex items-center gap-1.5">
+                <Wifi className="h-3 w-3" />
+                <Battery className="h-3.5 w-3.5 text-emerald-400" />
+              </div>
+            </div>
+
+            {/* Mobile App Screen Content */}
+            <div className="mt-4 flex-1 flex flex-col justify-between py-2 space-y-3 overflow-y-auto">
+              <div className="text-center space-y-1 pt-2">
+                <div className="h-16 w-16 mx-auto rounded-full border-2 border-purple-500/60 p-0.5 shadow-lg">
+                  <div className="h-full w-full rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center">
+                    <Sparkles className="h-8 w-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="font-serif text-base font-bold tracking-wide">Minds Eye Butterfly</h3>
+                <p className="text-[10px] text-zinc-400 font-mono">@mindseyebutterfly • Atelier Studio</p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2 pt-2">
+                <a
+                  href="https://www.tiktok.com/@mindseyebutterfly"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-800 p-3 hover:border-purple-500/50 transition group"
+                >
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <div className="p-1.5 rounded-lg bg-purple-950/60 text-purple-400">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-zinc-200">TikTok Atelier</div>
+                      <div className="text-[9px] text-zinc-500">Live studio streams & process</div>
+                    </div>
+                  </div>
+                  <Send className="h-3.5 w-3.5 text-zinc-500 group-hover:text-purple-400 transition" />
+                </a>
+
+                <a
+                  href="mailto:contact@mindseyebutterfly.com"
+                  className="flex items-center justify-between rounded-xl bg-zinc-900 border border-zinc-800 p-3 hover:border-purple-500/50 transition group"
+                >
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <div className="p-1.5 rounded-lg bg-purple-950/60 text-purple-400">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-semibold text-zinc-200">Commission Inquiries</div>
+                      <div className="text-[9px] text-zinc-500">Direct studio dispatch</div>
+                    </div>
+                  </div>
+                  <Send className="h-3.5 w-3.5 text-zinc-500 group-hover:text-purple-400 transition" />
+                </a>
+
+                <Link
+                  href="/studio"
+                  className="flex items-center justify-between rounded-xl bg-purple-600/90 p-3 hover:bg-purple-600 transition group shadow-lg shadow-purple-600/30"
+                >
+                  <div className="flex items-center gap-2.5 text-xs text-white">
+                    <div className="p-1.5 rounded-lg bg-white/20 text-white">
+                      <Palette className="h-4 w-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-bold">Sanctum Admin Portal</div>
+                      <div className="text-[9px] text-purple-200">Upload new creations</div>
+                    </div>
+                  </div>
+                  <Send className="h-3.5 w-3.5 text-white/80 group-hover:translate-x-0.5 transition" />
+                </Link>
+              </div>
+
+              <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-2.5 text-center text-[10px] text-zinc-400">
+                Studio open for select original oil and digital mixed commissions.
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-center">
+              <div className="h-1 w-32 rounded-full bg-zinc-600" />
+            </div>
+          </div>
         </div>
       </div>
     </main>
