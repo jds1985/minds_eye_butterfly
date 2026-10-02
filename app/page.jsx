@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
   Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, 
-  Frame, Info
+  Frame
 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
@@ -25,8 +25,64 @@ const FALLBACK_ARTWORKS = [
   }
 ];
 
+// Interactive Butterfly Pin Component
+function ButterflyPin({ label, top, left, color = 'purple', onClick }) {
+  const colorMap = {
+    purple: {
+      ring: 'border-purple-400',
+      glow: 'shadow-[0_0_15px_rgba(192,132,252,0.8)]',
+      bg: 'bg-purple-950/85',
+      text: 'text-purple-200',
+      svg: '#d8b4fe'
+    },
+    amber: {
+      ring: 'border-amber-400',
+      glow: 'shadow-[0_0_15px_rgba(251,191,36,0.8)]',
+      bg: 'bg-amber-950/85',
+      text: 'text-amber-200',
+      svg: '#fde68a'
+    }
+  }[color];
+
+  return (
+    <div
+      onClick={onClick}
+      className="absolute z-30 cursor-pointer group -translate-x-1/2 -translate-y-1/2"
+      style={{ top, left }}
+    >
+      {/* Outer Pulse Wave */}
+      <span className="absolute -inset-1 rounded-full animate-ping opacity-35 bg-white/40" />
+
+      {/* Main Butterfly Pin Marker */}
+      <div className={`relative flex items-center justify-center h-8 w-8 rounded-full border ${colorMap.ring} ${colorMap.bg} ${colorMap.glow} backdrop-blur-md transition-transform duration-300 group-hover:scale-125`}>
+        {/* Butterfly Icon */}
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4 transition-transform group-hover:rotate-12"
+          fill="none"
+          stroke={colorMap.svg}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M12 3v18" />
+          <path d="M12 7c-3-4-9-4-9 2s6 7 9 2" />
+          <path d="M12 7c3-4 9-4 9 2s-6 7-9 2" />
+          <path d="M12 17c-2 2-6 3-6-1s4-4 6-1" />
+          <path d="M12 17c2 2 6 3 6-1s-4-4-6-1" />
+        </svg>
+      </div>
+
+      {/* Hover Callout Badge */}
+      <div className={`absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md border ${colorMap.ring} bg-black/90 px-2.5 py-1 text-[11px] font-medium ${colorMap.text} shadow-2xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none flex items-center gap-1.5`}>
+        <Sparkles className="h-3 w-3" />
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function AtelierEngine() {
-  // 'room' | 'laptop' | 'sketchbook' | 'phone' | 'easel' | 'wallArt'
   const [activePortal, setActivePortal] = useState('room');
   const [artworks, setArtworks] = useState([]);
   const [artIdx, setArtIdx] = useState(0);
@@ -55,7 +111,174 @@ export default function AtelierEngine() {
     }
   }, []);
 
-  // Procedural Hearth Sound (Web Audio API)
+  // Web Audio procedural hearth fire
+  const toggleSound = () => {
+    if (!soundOn) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        audioCtxRef.current = ctx;
+
+        const bufferSize = ctx.sampleRate * 2;
+        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5I remember the exact project: we're building the **Minds Eye Butterfly** atelier room in Next.js, and we were struggling with those clunky, invisible rectangular hitboxes that kept drifting into the fireplace and stretching across different screens.
+
+Your idea to scrap the giant boxes and replace them with **small glowing butterfly map pins** is the right way to solve this. 
+
+Here is why that fixes the issue:
+1. **No width/height bounding box guessing:** You don't have to define a 12% by 30% box that stretches differently on every display. It’s just **a single $(X, Y)$ point**.
+2. **Intentional & Thematic:** Instead of the user blindly dragging their mouse around trying to find invisible hover zones, delicate little glowing butterflies rest naturally on each interactive spot with subtle fluttering wings.
+3. **Clean hover states:** Hovering over a butterfly blooms an elegant callout badge with the name of the spot (e.g. "Exhibition Laptop", "Artist Sketchbook", "Studio Easel").
+
+Here is the clean component to replace the hotspot section in your `app/page.jsx`:
+
+### 1. Define the Butterfly Hotspots
+Instead of messy divs with arbitrary widths, we use an array of pin coordinates:
+
+```jsx
+const STUDIO_PINS = [
+  {
+    id: 'laptop',
+    label: 'Atelier Laptop',
+    sub: 'Portfolio Exhibition',
+    x: '58.5%',
+    y: '62%'
+  },
+  {
+    id: 'sketchbook',
+    label: 'Drawing Pad',
+    sub: 'Graphite Studies',
+    x: '59%',
+    y: '78%'
+  },
+  {
+    id: 'phone',
+    label: 'Studio Phone',
+    sub: 'Commissions & Sanctum',
+    x: '64.5%',
+    y: '64%'
+  },
+  {
+    id: 'easel',
+    label: 'Studio Easel',
+    sub: 'Work in Progress',
+    x: '74%',
+    y: '48%'
+  },
+  {
+    id: 'wallArt',
+    label: 'Wall Masterpiece',
+    sub: 'Permanent Collection',
+    x: '66%',
+    y: '27%'
+  }
+];
+cat << 'EOF' > app/page.jsx
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import { 
+  ArrowLeft, ChevronLeft, ChevronRight, Sparkles, BookOpen, 
+  Smartphone, Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, 
+  Frame
+} from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+
+const FALLBACK_ARTWORKS = [
+  {
+    id: 'f1',
+    title: 'Violet Metamorphosis',
+    imageUrl: '/Studio1.jpg',
+    medium: 'Digital Fine Art & Acrylic Base'
+  },
+  {
+    id: 'f2',
+    title: 'Sanctum Twilight',
+    imageUrl: '/den-background.jpg',
+    medium: 'Atelier Interior Study'
+  }
+];
+
+// Single-point Butterfly Pins
+const STUDIO_PINS = [
+  {
+    id: 'laptop',
+    label: 'Atelier Laptop',
+    sub: 'Portfolio Exhibition',
+    x: '58.5%',
+    y: '62%'
+  },
+  {
+    id: 'sketchbook',
+    label: 'Drawing Pad',
+    sub: 'Graphite Studies',
+    x: '60%',
+    y: '77%'
+  },
+  {
+    id: 'phone',
+    label: 'Studio Phone',
+    sub: 'Commissions & Sanctum',
+    x: '64.5%',
+    y: '64%'
+  },
+  {
+    id: 'easel',
+    label: 'Studio Easel',
+    sub: 'Work in Progress',
+    x: '75%',
+    y: '48%'
+  },
+  {
+    id: 'wallArt',
+    label: 'Wall Masterpiece',
+    sub: 'Permanent Collection',
+    x: '66%',
+    y: '27%'
+  }
+];
+
+export default function AtelierEngine() {
+  const [activePortal, setActivePortal] = useState('room');
+  const [artworks, setArtworks] = useState([]);
+  const [artIdx, setArtIdx] = useState(0);
+  const [sketchIdx, setSketchIdx] = useState(0);
+  const [pageFlipping, setPageFlipping] = useState(false);
+  const [soundOn, setSoundOn] = useState(false);
+
+  const canvasRef = useRef(null);
+  const audioCtxRef = useRef(null);
+
+  // Firestore sync
+  useEffect(() => {
+    try {
+      const q = query(collection(db, 'artworks'), orderBy('createdAt', 'desc'));
+      const unsub = onSnapshot(
+        q,
+        (snap) => {
+          const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setArtworks(docs.length > 0 ? docs : FALLBACK_ARTWORKS);
+        },
+        () => setArtworks(FALLBACK_ARTWORKS)
+      );
+      return () => unsub();
+    } catch {
+      setArtworks(FALLBACK_ARTWORKS);
+    }
+  }, []);
+
+  // Web Audio procedural fire sound
   const toggleSound = () => {
     if (!soundOn) {
       try {
@@ -104,7 +327,7 @@ export default function AtelierEngine() {
     }
   };
 
-  // Living Canvas: Fireplace Embers & Crows outside window
+  // Canvas: Flying Crows & Hearth Embers
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -156,7 +379,7 @@ export default function AtelierEngine() {
     const render = () => {
       ctx.clearRect(0, 0, 1920, 1080);
 
-      // Window crows
+      // Crows clipped to window panes
       ctx.save();
       ctx.beginPath();
       ctx.rect(340, 210, 520, 260);
@@ -173,7 +396,7 @@ export default function AtelierEngine() {
       });
       ctx.restore();
 
-      // Hearth Fire & Light Flickering
+      // Fireplace Flicker
       const flicker = 0.85 + Math.sin(Date.now() * 0.008) * 0.08 + Math.random() * 0.07;
       const fireGrad = ctx.createRadialGradient(1350, 640, 10, 1350, 640, 240);
       fireGrad.addColorStop(0, `rgba(255, 140, 0, ${0.45 * flicker})`);
@@ -185,10 +408,10 @@ export default function AtelierEngine() {
       ctx.arc(1350, 640, 240, 0, Math.PI * 2);
       ctx.fill();
 
-      // Rising Embers
+      // Embers
       embers.forEach((p) => {
         p.y -= p.speedY;
-        p.x += p.speedX;
+        p.x -= p.speedX;
         p.life -= p.decay;
         if (p.life <= 0 || p.y < 460) {
           p.x = 1350 + (Math.random() * 90 - 45);
@@ -272,9 +495,9 @@ export default function AtelierEngine() {
                 : activePortal === 'phone'
                 ? '63.5% 65%'
                 : activePortal === 'easel'
-                ? '73% 48%'
+                ? '75% 48%'
                 : activePortal === 'wallArt'
-                ? '64% 28%'
+                ? '66% 27%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
@@ -284,20 +507,20 @@ export default function AtelierEngine() {
                 : activePortal === 'phone'
                 ? 'scale(5.2)'
                 : activePortal === 'easel'
-                ? 'scale(3.5)'
+                ? 'scale(3.4)'
                 : activePortal === 'wallArt'
                 ? 'scale(3.9)'
                 : 'scale(1)',
           }}
         >
-          {/* Base Studio Artwork */}
+          {/* Base Studio Image */}
           <img
             src="/Studio1.jpg"
             alt="Minds Eye Atelier"
             className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
           />
 
-          {/* Canvas Engine: Fire Embers, Ambient Lighting & Flying Crows */}
+          {/* Living Canvas */}
           <canvas
             ref={canvasRef}
             width={1920}
@@ -305,114 +528,43 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
-          {/* HOTSPOT 1: LAPTOP WORKSTATION */}
+          {/* BUTTERFLY PIN HOTSPOTS */}
           {activePortal === 'room' && (
-            <div
-              onClick={() => setActivePortal('laptop')}
-              className="absolute z-20 cursor-pointer group"
-              style={{
-                top: '55.5%',
-                left: '54.5%',
-                width: '7.8%',
-                height: '11.5%',
-              }}
-              title="Sit at the Laptop Station"
-            >
-              <div className="h-full w-full rounded transition-all duration-300 group-hover:bg-purple-500/15 group-hover:ring-1 group-hover:ring-purple-400/50 shadow-[0_0_20px_rgba(168,85,247,0.3)]" />
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-purple-500/40 px-2 py-0.5 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                Open Atelier Laptop
-              </div>
-            </div>
-          )}
+            <div className="absolute inset-0 pointer-events-none">
+              {STUDIO_PINS.map((pin) => (
+                <div
+                  key={pin.id}
+                  onClick={() => setActivePortal(pin.id)}
+                  style={{ left: pin.x, top: pin.y }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto cursor-pointer group z-30"
+                >
+                  {/* Outer Pulsing Aura */}
+                  <span className="absolute -inset-2 rounded-full bg-purple-500/35 animate-ping opacity-60 group-hover:opacity-100" />
 
-          {/* HOTSPOT 2: TABLE SKETCHBOOK */}
-          {activePortal === 'room' && (
-            <div
-              onClick={() => setActivePortal('sketchbook')}
-              className="absolute z-20 cursor-pointer group"
-              style={{
-                top: '68%',
-                left: '52%',
-                width: '18%',
-                height: '19%',
-              }}
-              title="Inspect Sketchbook on Desk"
-            >
-              <div className="h-full w-full rounded-lg transition-all duration-300 group-hover:bg-amber-500/15 group-hover:ring-1 group-hover:ring-amber-400/50 shadow-[0_0_20px_rgba(245,158,11,0.3)]" />
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-500/40 px-2 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                Open Sketchbook
-              </div>
-            </div>
-          )}
-
-          {/* HOTSPOT 3: SMARTPHONE ON GLASS DESK */}
-          {activePortal === 'room' && (
-            <div
-              onClick={() => setActivePortal('phone')}
-              className="absolute z-20 cursor-pointer group flex items-center justify-center"
-              style={{
-                top: '62.2%',
-                left: '63.2%',
-                width: '2.4%',
-                height: '6.2%',
-                transform: 'perspective(400px) rotateX(25deg) rotateY(-18deg) rotateZ(8deg)',
-              }}
-              title="Pick up Studio Smartphone"
-            >
-              <div className="absolute -bottom-1 inset-x-0 h-2 bg-purple-500/20 blur-sm rounded-full pointer-events-none" />
-              <div className="relative h-full w-full rounded-[6px] bg-gradient-to-b from-zinc-600 via-zinc-800 to-zinc-950 p-[1.5px] shadow-[0_4px_12px_rgba(0,0,0,0.9)] border border-zinc-500/50 group-hover:scale-105 group-hover:border-purple-400 transition-all duration-300">
-                <div className="h-full w-full rounded-[4px] bg-zinc-950 flex flex-col justify-between p-0.5 overflow-hidden ring-1 ring-purple-500/30">
-                  <div className="h-0.5 w-2 mx-auto rounded-full bg-black" />
-                  <div className="flex-1 flex items-center justify-center">
-                    <Sparkles className="h-2 w-2 text-purple-300 animate-pulse" />
+                  {/* Pin Orb with Butterfly SVG */}
+                  <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-zinc-950/85 border border-purple-400/70 shadow-[0_0_18px_rgba(168,85,247,0.7)] backdrop-blur-md transition-all duration-300 group-hover:scale-125 group-hover:border-purple-300 group-hover:bg-purple-950">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] transition-transform duration-300 group-hover:rotate-12"
+                    >
+                      <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z"/>
+                    </svg>
                   </div>
-                  <div className="h-0.5 w-2 mx-auto rounded-full bg-zinc-600" />
+
+                  {/* Map-style Tooltip Callout */}
+                  <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 hidden group-hover:flex flex-col items-center pointer-events-none transition-all duration-200">
+                    <div className="bg-zinc-950/95 border border-purple-400/60 px-3 py-1.5 rounded-lg shadow-[0_8px_25px_rgba(0,0,0,0.9)] whitespace-nowrap text-center">
+                      <p className="text-xs font-serif font-bold text-purple-200 tracking-wider">
+                        {pin.label}
+                      </p>
+                      <p className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">
+                        {pin.sub}
+                      </p>
+                    </div>
+                    <div className="w-2 h-2 bg-zinc-950 border-r border-b border-purple-400/60 rotate-45 -mt-1" />
+                  </div>
                 </div>
-              </div>
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-purple-500/40 px-2 py-0.5 text-[10px] text-purple-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                Studio Phone
-              </div>
-            </div>
-          )}
-
-          {/* HOTSPOT 4: STUDIO EASEL PAINTING (Right foreground canvas) */}
-          {activePortal === 'room' && (
-            <div
-              onClick={() => setActivePortal('easel')}
-              className="absolute z-20 cursor-pointer group"
-              style={{
-                top: '36%',
-                left: '67.5%',
-                width: '10.5%',
-                height: '24%',
-                transform: 'rotate(-4deg)',
-              }}
-              title="Inspect Current Easel Piece"
-            >
-              <div className="h-full w-full rounded-md transition-all duration-300 group-hover:bg-amber-500/15 group-hover:ring-1 group-hover:ring-amber-400/60 shadow-[0_0_25px_rgba(245,158,11,0.35)]" />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-500/40 px-2.5 py-0.5 text-[10px] text-amber-200 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                View Studio Easel
-              </div>
-            </div>
-          )}
-
-          {/* HOTSPOT 5: WALL MASTERPIECE (Framed Painting Above Fireplace) */}
-          {activePortal === 'room' && (
-            <div
-              onClick={() => setActivePortal('wallArt')}
-              className="absolute z-20 cursor-pointer group"
-              style={{
-                top: '20%',
-                left: '62.5%',
-                width: '6.8%',
-                height: '14.5%',
-              }}
-              title="Inspect Framed Gallery Painting"
-            >
-              <div className="h-full w-full rounded-sm transition-all duration-300 group-hover:bg-amber-400/20 group-hover:ring-1 group-hover:ring-amber-300/60 shadow-[0_0_20px_rgba(251,191,36,0.35)]" />
-              <div className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-black/90 border border-amber-400/40 px-2.5 py-0.5 text-[10px] text-amber-100 opacity-0 group-hover:opacity-100 transition shadow-lg pointer-events-none">
-                Inspect Wall Artwork
-              </div>
+              ))}
             </div>
           )}
         </div>
@@ -739,7 +891,6 @@ export default function AtelierEngine() {
       >
         <div className="absolute w-[700px] h-[700px] rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
 
-        {/* Top Header */}
         <div className="w-full max-w-4xl flex items-center justify-between mb-4 z-50">
           <button
             onClick={() => setActivePortal('room')}
@@ -755,7 +906,6 @@ export default function AtelierEngine() {
           </span>
         </div>
 
-        {/* Featured Easel Canvas in Solid Wood Frame */}
         <div className="relative max-h-[76vh] max-w-3xl flex flex-col items-center justify-center p-3 rounded-2xl bg-gradient-to-b from-stone-800 via-stone-900 to-black border-4 border-amber-800/70 shadow-[0_25px_60px_rgba(0,0,0,0.95)]">
           <img
             src={artworks[0]?.imageUrl || '/Studio1.jpg'}
@@ -802,7 +952,6 @@ export default function AtelierEngine() {
           </span>
         </div>
 
-        {/* Ornate Gilded Gold Wall Frame View */}
         <div className="relative max-h-[76vh] max-w-2xl flex flex-col items-center justify-center p-4 rounded-xl bg-gradient-to-br from-amber-950/80 via-stone-900 to-black border-[6px] border-amber-600/80 shadow-[0_30px_70px_rgba(0,0,0,0.95)]">
           <img
             src={artworks[1]?.imageUrl || '/den-background.jpg'}
