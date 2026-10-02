@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
-  ArrowLeft, ChevronLeft, ChevronRight, Sparkles, 
-  Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, Frame,
-  Upload, Trash2, Loader2, Image as ImageIcon
+  ArrowLeft, ChevronLeft, ChevronRight, 
+  Volume2, VolumeX, Wifi, Battery, Mail, Send, Palette, Frame, Lock
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+
+const DEV_KEY = 'butterfly';
 
 const FALLBACK_ARTWORKS = [
   {
@@ -26,14 +28,6 @@ const FALLBACK_ARTWORKS = [
 
 const INTERACTIVE_ZONES = [
   {
-    id: 'cat',
-    label: 'Archmage Whiskers',
-    sub: 'Wizard Cat Sanctum (Upload/Delete)',
-    box: { left: '23%', top: '65%', width: '14%', height: '22%' },
-    pin: { left: '29%', top: '66%' },
-    isCat: true
-  },
-  {
     id: 'laptop',
     label: 'Atelier Laptop',
     sub: 'Portfolio Exhibition',
@@ -50,7 +44,7 @@ const INTERACTIVE_ZONES = [
   {
     id: 'phone',
     label: 'Studio Phone',
-    sub: 'Commissions & Sanctum',
+    sub: 'Commissions & Inquiries',
     box: { left: '64.5%', top: '63%', width: '3.5%', height: '7%' },
     pin: { left: '66.2%', top: '63.5%' }
   },
@@ -71,6 +65,7 @@ const INTERACTIVE_ZONES = [
 ];
 
 export default function AtelierEngine() {
+  const router = useRouter();
   const [activePortal, setActivePortal] = useState('room');
   const [hoveredZone, setHoveredZone] = useState(null);
   const [artworks, setArtworks] = useState(FALLBACK_ARTWORKS);
@@ -79,15 +74,10 @@ export default function AtelierEngine() {
   const [pageFlipping, setPageFlipping] = useState(false);
   const [soundOn, setSoundOn] = useState(false);
 
-  // Wizard Cat Sanctum State
-  const [uploading, setUploading] = useState(false);
-  const [title, setTitle] = useState('');
-  const [medium, setMedium] = useState('Digital Fine Art & Acrylic Base');
-  const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
-  const [catSpeech, setCatSpeech] = useState(
-    'Mrow! Feed me your finest canvas, mortal curator, and I shall enshrine it into the Atelier!'
-  );
+  // Hidden hearth passcode state
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [passcodeError, setPasscodeError] = useState(false);
 
   const canvasRef = useRef(null);
 
@@ -96,102 +86,23 @@ export default function AtelierEngine() {
     setActivePortal('room');
   };
 
-  const loadArt = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('artworks')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (!error && data && data.length > 0) {
-        setArtworks(data);
-      }
-    } catch (err) {
-      console.error('Supabase fetch error, fallback active:', err);
-    }
-  };
-
   useEffect(() => {
+    async function loadArt() {
+      try {
+        const { data, error } = await supabase
+          .from('artworks')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setArtworks(data);
+        }
+      } catch (err) {
+        console.error('Supabase fetch error, fallback active:', err);
+      }
+    }
     loadArt();
   }, []);
-
-  const handleFileChange = (e) => {
-    const selected = e.target.files[0];
-    if (selected) {
-      setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-      setCatSpeech(`*Sniff sniff* "${selected.name}" smells like magic. Give it a title and cast the spell!`);
-    }
-  };
-
-  const handleUpload = async (e) => {
-    e.preventDefault();
-    if (!file || !title.trim()) {
-      setCatSpeech('*Hiss!* Both a title and an image file are required to bind the canvas!');
-      return;
-    }
-
-    setUploading(true);
-    setCatSpeech('*Chants arcane cat rites... weaving pixels into the room fabric...*');
-
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('gallery')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage
-        .from('gallery')
-        .getPublicUrl(filePath);
-
-      const imageUrl = publicUrlData.publicUrl;
-
-      const { data: newDoc, error: insertError } = await supabase
-        .from('artworks')
-        .insert([{ title, medium, image_url: imageUrl }])
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      setArtworks((prev) => [newDoc, ...prev]);
-      setTitle('');
-      setFile(null);
-      setPreview(null);
-      setCatSpeech(`*Purrrrr!* "${title}" is bound to the easel and gallery walls!`);
-    } catch (err) {
-      console.error(err);
-      setCatSpeech(`*Hairball cough* The spell fizzled: ${err.message}`);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleDelete = async (artwork) => {
-    const confirmDelete = window.confirm(`Shall Archmage Whiskers swat "${artwork.title}" into the void?`);
-    if (!confirmDelete) return;
-
-    setCatSpeech(`*SWAT!* Banishing "${artwork.title}"!`);
-
-    try {
-      const { error } = await supabase
-        .from('artworks')
-        .delete()
-        .eq('id', artwork.id);
-
-      if (error) throw error;
-
-      setArtworks((prev) => prev.filter((item) => item.id !== artwork.id));
-      setCatSpeech(`*Licks paw smugly.* "${artwork.title}" was swatted into non-existence.`);
-    } catch (err) {
-      setCatSpeech(`Banishment failed: ${err.message}`);
-    }
-  };
 
   // Living Hearth & Crows Engine
   useEffect(() => {
@@ -361,6 +272,17 @@ export default function AtelierEngine() {
     return () => cancelAnimationFrame(animationId);
   }, []);
 
+  const handlePasscodeSubmit = (e) => {
+    e.preventDefault();
+    if (passcodeInput.trim() === DEV_KEY) {
+      setShowPasscodeModal(false);
+      setPasscodeInput('');
+      router.push('/studio');
+    } else {
+      setPasscodeError(true);
+    }
+  };
+
   const totalWorks = artworks.length || 1;
   const currentArt = artworks[artIdx] || artworks[0];
   const safeSketchIdx = sketchIdx % totalWorks;
@@ -386,6 +308,7 @@ export default function AtelierEngine() {
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-white font-sans flex items-center justify-center">
+      {/* Clean Header: Room Title + Ambient Hearth Audio */}
       <header
         className={`absolute top-0 left-0 right-0 z-40 flex items-center justify-between p-6 transition-all duration-700 ${
           activePortal !== 'room' ? 'opacity-0 -translate-y-8 pointer-events-none' : 'opacity-100 translate-y-0'
@@ -400,23 +323,13 @@ export default function AtelierEngine() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setActivePortal('cat')}
-            className="flex items-center gap-2 rounded-full border border-purple-500/60 bg-purple-950/80 px-4 py-2 text-xs font-semibold text-purple-200 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.4)] hover:bg-purple-900 transition"
-          >
-            <span>🧙‍♂️🐱</span>
-            <span>Wizard Cat Studio</span>
-          </button>
-
-          <button
-            onClick={() => setSoundOn(!soundOn)}
-            className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/80 px-4 py-2 text-xs font-medium text-amber-200 backdrop-blur-md shadow-xl hover:bg-zinc-900 transition"
-          >
-            {soundOn ? <Volume2 className="h-4 w-4 text-amber-400 animate-pulse"/> : <VolumeX className="h-4 w-4 text-zinc-400"/>}
-            <span>{soundOn ? 'Atelier Hearth Active' : 'Sound Ambient Off'}</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setSoundOn(!soundOn)}
+          className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-zinc-950/80 px-4 py-2 text-xs font-medium text-amber-200 backdrop-blur-md shadow-xl hover:bg-zinc-900 transition"
+        >
+          {soundOn ? <Volume2 className="h-4 w-4 text-amber-400 animate-pulse"/> : <VolumeX className="h-4 w-4 text-zinc-400"/>}
+          <span>{soundOn ? 'Atelier Hearth Active' : 'Sound Ambient Off'}</span>
+        </button>
       </header>
 
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
@@ -434,8 +347,6 @@ export default function AtelierEngine() {
                 ? '84% 50%'
                 : activePortal === 'wallArt'
                 ? '68% 28%'
-                : activePortal === 'cat'
-                ? '29% 75%'
                 : '50% 50%',
             transform:
               activePortal === 'laptop'
@@ -448,8 +359,6 @@ export default function AtelierEngine() {
                 ? 'scale(3.4)'
                 : activePortal === 'wallArt'
                 ? 'scale(3.9)'
-                : activePortal === 'cat'
-                ? 'scale(2.2)'
                 : 'scale(1)',
           }}
         >
@@ -466,9 +375,23 @@ export default function AtelierEngine() {
             className="absolute inset-0 h-full w-full pointer-events-none z-10"
           />
 
+          {/* Hidden Hearth Dev Entrance - No Pin or Overlay */}
+          {activePortal === 'room' && (
+            <div
+              onClick={() => {
+                setPasscodeError(false);
+                setPasscodeInput('');
+                setShowPasscodeModal(true);
+              }}
+              style={{ left: '67%', top: '53%', width: '7%', height: '14%' }}
+              className="absolute z-20 cursor-pointer"
+              title="Atelier Hearth"
+            />
+          )}
+
           {/* Interactive Object Pins */}
           {activePortal === 'room' && (
-            <div className="absolute inset-0 z-20">
+            <div className="absolute inset-0 z-20 pointer-events-none">
               {INTERACTIVE_ZONES.map((zone) => {
                 const isHovered = hoveredZone === zone.id;
                 return (
@@ -486,7 +409,7 @@ export default function AtelierEngine() {
                       width: zone.box.width,
                       height: zone.box.height,
                     }}
-                    className="absolute cursor-pointer"
+                    className="absolute cursor-pointer pointer-events-auto"
                   >
                     <div
                       style={{
@@ -502,16 +425,12 @@ export default function AtelierEngine() {
                       <span className="absolute -inset-2 rounded-full bg-purple-500/40 animate-ping" />
 
                       <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-zinc-950/90 border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.9)] backdrop-blur-md">
-                        {zone.isCat ? (
-                          <span className="text-sm">🐱</span>
-                        ) : (
-                          <svg
-                            viewBox="0 0 24 24"
-                            className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] animate-pulse"
-                          >
-                            <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z"/>
-                          </svg>
-                        )}
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] animate-pulse"
+                        >
+                          <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z"/>
+                        </svg>
                       </div>
 
                       <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 flex flex-col items-center">
@@ -534,155 +453,52 @@ export default function AtelierEngine() {
         </div>
       </div>
 
-      {/* WIZARD CAT SANCTUM PORTAL */}
-      <div
-        className={`absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-all duration-700 pointer-events-none ${
-          activePortal === 'cat' ? 'opacity-100 pointer-events-auto' : 'opacity-0'
-        }`}
-      >
-        <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-purple-500/50 bg-zinc-950 p-6 sm:p-8 shadow-[0_0_60px_rgba(168,85,247,0.3)] space-y-6">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-            <button
-              onClick={returnToRoom}
-              className="flex items-center gap-2 rounded-full border border-purple-500/50 bg-purple-950/80 px-4 py-1.5 text-xs font-semibold text-purple-200 shadow-xl hover:bg-purple-900 transition"
-            >
-              <ArrowLeft className="h-3.5 w-3.5"/>
-              <span>Return to Atelier Room</span>
-            </button>
-
-            <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
-              Archmage Whisker's Sanctum
-            </span>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center gap-5 p-5 rounded-2xl bg-gradient-to-r from-purple-950/70 via-zinc-900 to-black border border-purple-500/30">
-            <div className="text-5xl shrink-0 p-3 rounded-2xl bg-purple-900/40 border border-purple-400/50 shadow-[0_0_20px_rgba(168,85,247,0.5)] animate-pulse">
-              🧙‍♂️🐱
-            </div>
-            <div className="space-y-1 text-center sm:text-left">
-              <h2 className="text-lg font-serif font-bold text-purple-100">
-                Curator Familiar of Minds Eye Butterfly
-              </h2>
-              <p className="font-mono text-xs sm:text-sm text-purple-300 italic bg-black/50 p-2.5 rounded-xl border border-purple-900/60">
-                "{catSpeech}"
-              </p>
-            </div>
-          </div>
-
-          <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-zinc-900/60 p-5 rounded-2xl border border-zinc-800">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono text-zinc-400 uppercase tracking-wider mb-1">
-                  Masterpiece Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Celestial Moth Study"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-zinc-400 uppercase tracking-wider mb-1">
-                  Medium & Study
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Oil on Belgian Linen"
-                  value={medium}
-                  onChange={(e) => setMedium(e.target.value)}
-                  className="w-full rounded-lg bg-zinc-950 border border-zinc-700 px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-zinc-400 uppercase tracking-wider mb-1">
-                  Canvas Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="block w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-900 file:text-purple-200 hover:file:bg-purple-800 cursor-pointer"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={uploading}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 py-3 text-sm font-bold text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] transition"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin"/>
-                    <span>Binding Spell in Progress...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4"/>
-                    <span>Cast Enshrinement Spell</span>
-                  </>
-                )}
-              </button>
+      {/* Passcode Modal for Studio Curator Access */}
+      {showPasscodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-sm rounded-2xl border border-amber-600/40 bg-zinc-950 p-6 shadow-[0_0_40px_rgba(217,119,6,0.25)] space-y-4 text-center">
+            <div className="mx-auto w-10 h-10 rounded-full bg-amber-950/60 border border-amber-500/40 flex items-center justify-center text-amber-300">
+              <Lock className="w-5 h-5" />
             </div>
 
-            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-800 bg-zinc-950/80 p-4 min-h-[200px]">
-              {preview ? (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="max-h-52 max-w-full rounded-lg object-contain shadow-md"
-                />
-              ) : (
-                <div className="text-center text-zinc-500 space-y-1">
-                  <ImageIcon className="h-8 w-8 mx-auto opacity-40"/>
-                  <p className="text-xs font-mono">No canvas file selected</p>
-                </div>
+            <div className="space-y-1">
+              <h3 className="font-serif text-lg font-bold text-amber-100">Atelier Curator Gate</h3>
+              <p className="text-xs text-zinc-400">Enter access key to manage sanctuary archives.</p>
+            </div>
+
+            <form onSubmit={handlePasscodeSubmit} className="space-y-3">
+              <input
+                type="password"
+                placeholder="Access key..."
+                value={passcodeInput}
+                onChange={(e) => setPasscodeInput(e.target.value)}
+                autoFocus
+                className="w-full text-center rounded-lg bg-zinc-900 border border-zinc-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-mono tracking-widest"
+              />
+
+              {passcodeError && (
+                <p className="text-[11px] text-rose-400 font-mono">Invalid access key.</p>
               )}
-            </div>
-          </form>
 
-          <div className="space-y-3">
-            <h3 className="font-serif font-bold text-sm text-zinc-300">
-              Active Atelier Works ({artworks.length})
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {artworks.map((art) => (
-                <div
-                  key={art.id}
-                  className="relative rounded-xl border border-zinc-800 bg-zinc-900/80 p-2.5 shadow-md flex flex-col justify-between group"
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasscodeModal(false)}
+                  className="w-1/2 py-2 rounded-lg border border-zinc-700 bg-zinc-900 text-xs text-zinc-300 hover:bg-zinc-800 transition"
                 >
-                  <div className="aspect-[4/3] w-full rounded-lg overflow-hidden bg-black border border-zinc-800 mb-2">
-                    <img
-                      src={art.image_url || art.imageUrl}
-                      alt={art.title}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="truncate pr-2">
-                      <p className="text-xs font-serif font-bold text-zinc-200 truncate">{art.title}</p>
-                      <p className="text-[10px] text-zinc-400 italic truncate">{art.medium}</p>
-                    </div>
-
-                    <button
-                      onClick={() => handleDelete(art)}
-                      title="Paw of Banishment"
-                      className="p-1.5 rounded-lg bg-rose-950/60 border border-rose-800/40 text-rose-300 hover:bg-rose-900 transition"
-                    >
-                      <Trash2 className="h-3.5 w-3.5"/>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="w-1/2 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-black transition"
+                >
+                  Enter
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
 
       {/* LAPTOP PORTAL */}
       <div
@@ -924,13 +740,11 @@ export default function AtelierEngine() {
 
             <div className="mt-4 flex-1 flex flex-col justify-between py-2 space-y-3 overflow-y-auto">
               <div className="text-center space-y-1 pt-2">
-                <div className="h-16 w-16 mx-auto rounded-full border-2 border-purple-500/60 p-0.5 shadow-lg">
-                  <div className="h-full w-full rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center">
-                    <Sparkles className="h-8 w-8 text-white"/>
-                  </div>
+                <div className="h-16 w-16 mx-auto rounded-full border border-purple-500/40 p-0.5 shadow-lg bg-zinc-900 flex items-center justify-center">
+                  <span className="font-serif text-lg font-bold text-purple-300">MEB</span>
                 </div>
                 <h3 className="font-serif text-base font-bold tracking-wide">Minds Eye Butterfly</h3>
-                <p className="text-[10px] text-zinc-400 font-mono">@mindseyebutterfly • Atelier Studio</p>
+                <p className="text-[10px] text-zinc-400 font-mono">Living Atelier Studio</p>
               </div>
 
               <div className="space-y-2 pt-2">
@@ -942,11 +756,11 @@ export default function AtelierEngine() {
                 >
                   <div className="flex items-center gap-2.5 text-xs">
                     <div className="p-1.5 rounded-lg bg-purple-950/60 text-purple-400">
-                      <Sparkles className="h-4 w-4"/>
+                      <Send className="h-4 w-4"/>
                     </div>
                     <div className="text-left">
                       <div className="font-semibold text-zinc-200">TikTok Atelier</div>
-                      <div className="text-[9px] text-zinc-500">Live studio streams & process</div>
+                      <div className="text-[9px] text-zinc-500">Live streams & process</div>
                     </div>
                   </div>
                   <Send className="h-3.5 w-3.5 text-zinc-500 group-hover:text-purple-400 transition"/>
@@ -967,22 +781,6 @@ export default function AtelierEngine() {
                   </div>
                   <Send className="h-3.5 w-3.5 text-zinc-500 group-hover:text-purple-400 transition"/>
                 </a>
-
-                <button
-                  onClick={() => setActivePortal('cat')}
-                  className="w-full flex items-center justify-between rounded-xl bg-purple-600/90 p-3 hover:bg-purple-600 transition group shadow-lg shadow-purple-600/30 text-left"
-                >
-                  <div className="flex items-center gap-2.5 text-xs text-white">
-                    <div className="p-1.5 rounded-lg bg-white/20 text-white">
-                      <Palette className="h-4 w-4"/>
-                    </div>
-                    <div>
-                      <div className="font-bold">Sanctum Admin Portal</div>
-                      <div className="text-[9px] text-purple-200">Upload & banish artworks</div>
-                    </div>
-                  </div>
-                  <Send className="h-3.5 w-3.5 text-white/80 group-hover:translate-x-0.5 transition"/>
-                </button>
               </div>
 
               <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 p-2.5 text-center text-[10px] text-zinc-400">
