@@ -315,7 +315,7 @@ export default function AtelierEngine() {
         }`}
       >
         <img
-          src="/logo.png"
+          src="/Minds_eye_butterfly.png"
           alt="Minds Eye Butterfly"
           className="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] filter brightness-110"
         />
