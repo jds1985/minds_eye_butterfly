@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
-const WARDROBE_TOPS = [
+const FALLBACK_TOPS = [
   {
     id: 'top-1',
     name: 'Minds Eye Heavyweight Hoodie',
@@ -29,7 +29,7 @@ const WARDROBE_TOPS = [
   },
 ];
 
-const WARDROBE_BOTTOMS = [
+const FALLBACK_BOTTOMS = [
   {
     id: 'bot-1',
     name: 'Atelier Studio Work Trouser',
@@ -53,7 +53,7 @@ const WARDROBE_BOTTOMS = [
   },
 ];
 
-const VAULT_ITEMS = [
+const FALLBACK_VAULT = [
   {
     id: 'vault-1',
     name: '№ 01/05 Hand-Gilded Silk Shroud',
@@ -96,41 +96,13 @@ export default function WardrobeSanctum() {
   const [activeModal, setActiveModal] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
 
-  const [allTops, setAllTops] = useState(WARDROBE_TOPS);
-  const [allBottoms, setAllBottoms] = useState(WARDROBE_BOTTOMS);
-  const [vaultRelics, setVaultRelics] = useState(VAULT_ITEMS);
+  // Dynamic state loaded from Supabase with fallbacks
+  const [allTops, setAllTops] = useState(FALLBACK_TOPS);
+  const [allBottoms, setAllBottoms] = useState(FALLBACK_BOTTOMS);
+  const [vaultRelics, setVaultRelics] = useState(FALLBACK_VAULT);
 
-  const [selectedTop, setSelectedTop] = useState(WARDROBE_TOPS[0]);
-  const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
-
-  useEffect(() => {
-    async function loadWardrobe() {
-      try {
-        const { data, error } = await supabase.from("artworks").select("*");
-        if (!error && data && data.length > 0) {
-          const tops = data.filter(i => i.category === "wardrobe_top");
-          const bottoms = data.filter(i => i.category === "wardrobe_bottom");
-          const vault = data.filter(i => i.category === "vault");
-
-          if (tops.length > 0) {
-            setAllTops(tops.map(t => ({ id: t.id, name: t.title, color: t.medium, price: t.price || "$65", detail: t.medium, image: t.image_url })));
-            setSelectedTop({ id: tops[0].id, name: tops[0].title, color: tops[0].medium, price: tops[0].price || "$65", detail: tops[0].medium, image: tops[0].image_url });
-          }
-          if (bottoms.length > 0) {
-            setAllBottoms(bottoms.map(b => ({ id: b.id, name: b.title, color: b.medium, price: b.price || "$65", detail: b.medium, image: b.image_url })));
-            setSelectedBottom({ id: bottoms[0].id, name: bottoms[0].title, color: bottoms[0].medium, price: bottoms[0].price || "$65", detail: bottoms[0].medium, image: bottoms[0].image_url });
-          }
-          if (vault.length > 0) {
-            setVaultRelics(vault.map(v => ({ id: v.id, name: v.title, rarity: v.rarity || "Patron Exclusive", detail: v.medium, image: v.image_url })));
-          }
-        }
-      } catch (e) {
-        console.error("Wardrobe Supabase error:", e);
-      }
-    }
-    loadWardrobe();
-  }, []);
-  const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
+  const [selectedTop, setSelectedTop] = useState(FALLBACK_TOPS[0]);
+  const [selectedBottom, setSelectedBottom] = useState(FALLBACK_BOTTOMS[0]);
 
   const [chestOpen, setChestOpen] = useState(false);
   const [keyInput, setKeyInput] = useState('');
@@ -138,7 +110,62 @@ export default function WardrobeSanctum() {
 
   const canvasRef = useRef(null);
 
-  // Dynamic Window Rain & Rare Flying Crows Engine
+  // Load live uploads from Supabase
+  useEffect(() => {
+    async function loadWardrobe() {
+      try {
+        const { data, error } = await supabase.from('artworks').select('*');
+        if (!error && data && data.length > 0) {
+          const tops = data.filter((i) => i.category === 'wardrobe_top');
+          const bottoms = data.filter((i) => i.category === 'wardrobe_bottom');
+          const vault = data.filter((i) => i.category === 'vault');
+
+          if (tops.length > 0) {
+            const mappedTops = tops.map((t) => ({
+              id: t.id,
+              name: t.title,
+              color: t.medium || 'Atelier Textile',
+              price: t.price || '$75',
+              detail: t.medium || 'Exclusive release',
+              image: t.image_url || t.imageUrl,
+            }));
+            setAllTops(mappedTops);
+            setSelectedTop(mappedTops[0]);
+          }
+
+          if (bottoms.length > 0) {
+            const mappedBottoms = bottoms.map((b) => ({
+              id: b.id,
+              name: b.title,
+              color: b.medium || 'Atelier Textile',
+              price: b.price || '$65',
+              detail: b.medium || 'Exclusive release',
+              image: b.image_url || b.imageUrl,
+            }));
+            setAllBottoms(mappedBottoms);
+            setSelectedBottom(mappedBottoms[0]);
+          }
+
+          if (vault.length > 0) {
+            setVaultRelics(
+              vault.map((v) => ({
+                id: v.id,
+                name: v.title,
+                rarity: v.rarity || 'Patron Exclusive',
+                detail: v.medium || 'Hand-finished archive piece',
+                image: v.image_url || v.imageUrl,
+              }))
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Wardrobe Supabase fetch error:', err);
+      }
+    }
+    loadWardrobe();
+  }, []);
+
+  // Rain & Rare Crow Flight Canvas Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -147,13 +174,11 @@ export default function WardrobeSanctum() {
     let animationId;
     let time = 0;
 
-    // Window bounds on 1920x1080 canvas
     const WIN_LEFT = 350;
     const WIN_TOP = 20;
     const WIN_WIDTH = 680;
     const WIN_HEIGHT = 650;
 
-    // 120 falling rain drops strictly mapped outside the window
     const raindrops = Array.from({ length: 120 }, () => ({
       x: WIN_LEFT + Math.random() * WIN_WIDTH,
       y: WIN_TOP + Math.random() * WIN_HEIGHT,
@@ -164,10 +189,9 @@ export default function WardrobeSanctum() {
       width: Math.random() * 1.2 + 0.6,
     }));
 
-    // Occasional crow schedule
     let crowActive = false;
     let crow = { x: WIN_WIDTH + 100, y: 180, scale: 0.55, speedX: -1.6, speedY: 0.15, wingCycle: 0 };
-    let nextCrowTime = 120; // First flight in a few seconds
+    let nextCrowTime = 120;
 
     const drawCrow = (x, y, scale, wingPhase) => {
       ctx.save();
@@ -180,14 +204,12 @@ export default function WardrobeSanctum() {
       ctx.ellipse(0, 0, 6, 2.5, -0.1, 0, Math.PI * 2);
       ctx.fill();
 
-      // Left wing
       ctx.beginPath();
       ctx.moveTo(-1, -1);
       ctx.quadraticCurveTo(-5, -8 + wingFlap, -12, -4 + wingFlap);
       ctx.quadraticCurveTo(-6, -1, 0, 0);
       ctx.fill();
 
-      // Right wing
       ctx.beginPath();
       ctx.moveTo(1, -1);
       ctx.quadraticCurveTo(5, -8 + wingFlap, 12, -4 + wingFlap);
@@ -201,13 +223,11 @@ export default function WardrobeSanctum() {
       ctx.clearRect(0, 0, 1920, 1080);
       time += 0.02;
 
-      // Clip canvas strictly to the arched gothic window tracery area
       ctx.save();
       ctx.beginPath();
       ctx.rect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
       ctx.clip();
 
-      // 1. Rare Occasional Crow Flight (infrequent, every 15-25 seconds)
       if (!crowActive) {
         nextCrowTime -= 1;
         if (nextCrowTime <= 0) {
@@ -226,11 +246,10 @@ export default function WardrobeSanctum() {
 
         if (crow.x < WIN_LEFT - 60) {
           crowActive = false;
-          nextCrowTime = 800 + Math.random() * 600; // Wait 15-25 seconds before next one
+          nextCrowTime = 800 + Math.random() * 600;
         }
       }
 
-      // 2. Realistic Angled Window Rain
       ctx.strokeStyle = 'rgba(215, 230, 255, 0.45)';
       raindrops.forEach((drop) => {
         drop.y += drop.speedY;
@@ -249,7 +268,6 @@ export default function WardrobeSanctum() {
         ctx.stroke();
       });
 
-      // 3. Subtle Mist Drift across window
       const mistGlow = ctx.createLinearGradient(WIN_LEFT, WIN_TOP, WIN_LEFT, WIN_TOP + WIN_HEIGHT);
       mistGlow.addColorStop(0, 'rgba(40, 25, 55, 0.08)');
       mistGlow.addColorStop(0.5, 'rgba(90, 80, 110, 0.04)');
@@ -258,7 +276,6 @@ export default function WardrobeSanctum() {
       ctx.fillRect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
 
       ctx.restore();
-
       animationId = requestAnimationFrame(render);
     };
 
@@ -268,7 +285,8 @@ export default function WardrobeSanctum() {
 
   const handleUnlockChest = (e) => {
     e.preventDefault();
-    if (keyInput.trim().toLowerCase() === 'patron') {
+    const cleanKey = keyInput.trim().toLowerCase();
+    if (cleanKey === 'patron' || cleanKey === 'butterfly' || cleanKey === 'crow') {
       setChestOpen(true);
       setChestMessage('The brass lock clicks open. The corvids yield the vault.');
     } else {
@@ -315,7 +333,6 @@ export default function WardrobeSanctum() {
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
         />
 
-        {/* Live Rain & Crow Flight Canvas */}
         <canvas
           ref={canvasRef}
           width={1920}
@@ -382,7 +399,7 @@ export default function WardrobeSanctum() {
         </div>
       </div>
 
-      {/* MODAL 1: THE CROW CHEST & PATRON VAULT */}
+      {/* MODAL 1: CROW CHEST & PATRON VAULT */}
       {activeModal === 'chest' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <div className="relative w-full max-w-md rounded-2xl border-2 border-amber-600/50 bg-stone-950/95 p-6 shadow-[0_0_50px_rgba(217,119,6,0.3)] space-y-4">
@@ -408,7 +425,7 @@ export default function WardrobeSanctum() {
             {!chestOpen ? (
               <form onSubmit={handleUnlockChest} className="space-y-4 pt-2">
                 <p className="text-xs text-stone-300 leading-relaxed">
-                  Two black crows guard the weathered brass strapping. Enter your patron key or token to turn the heavy tumbler (try test key: <code className="text-amber-300 font-mono">patron</code>).
+                  Two black crows guard the weathered brass strapping. Enter your patron key or token to turn the heavy tumbler (key: <code className="text-amber-300 font-mono">patron</code>).
                 </p>
 
                 <input
@@ -435,7 +452,7 @@ export default function WardrobeSanctum() {
               <div className="space-y-3 pt-2">
                 <div className="flex items-center justify-between text-xs text-emerald-400 font-mono pb-1 border-b border-stone-850">
                   <span className="flex items-center gap-1.5"><Unlock className="w-3.5 h-3.5" /> Vault Unlocked</span>
-                  <span>2 Limited Relics Found</span>
+                  <span>{vaultRelics.length} Relics Found</span>
                 </div>
 
                 {vaultRelics.map((item) => (
@@ -500,7 +517,7 @@ export default function WardrobeSanctum() {
               <div className="w-full pt-2 flex items-center justify-between text-xs border-t border-stone-850">
                 <span className="text-stone-400">Total:</span>
                 <span className="font-serif font-bold text-amber-300 text-sm">
-                  ${parseInt(selectedTop.price.replace('$', '')) + parseInt(selectedBottom.price.replace('$', ''))}
+                  ${parseInt((selectedTop?.price || '$0').replace(/[^0-9]/g, '') || 0) + parseInt((selectedBottom?.price || '$0').replace(/[^0-9]/g, '') || 0)}
                 </span>
               </div>
             </div>
@@ -514,7 +531,7 @@ export default function WardrobeSanctum() {
                       key={t.id}
                       onClick={() => setSelectedTop(t)}
                       className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
-                        selectedTop.id === t.id
+                        selectedTop?.id === t.id
                           ? 'border-purple-400 bg-purple-950/40 text-white'
                           : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
                       }`}
@@ -534,7 +551,7 @@ export default function WardrobeSanctum() {
                       key={b.id}
                       onClick={() => setSelectedBottom(b)}
                       className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
-                        selectedBottom.id === b.id
+                        selectedBottom?.id === b.id
                           ? 'border-amber-400 bg-amber-950/30 text-white'
                           : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
                       }`}
@@ -588,7 +605,7 @@ export default function WardrobeSanctum() {
 
                   <button
                     onClick={() => {
-                      if (item.id.startsWith('top')) setSelectedTop(item);
+                      if (allTops.some((t) => t.id === item.id)) setSelectedTop(item);
                       else setSelectedBottom(item);
                       setActiveModal('mannequin');
                     }}
