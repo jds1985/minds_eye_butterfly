@@ -147,7 +147,7 @@ export default function WardrobeSanctum() {
       {/* Main Room Viewport */}
       <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
         <img
-          src="/dressing-room.jpg"
+          src="/Dressing_room.jpg"
           alt="The Dressing Room Atelier"
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
         />
