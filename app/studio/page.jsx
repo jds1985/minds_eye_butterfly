@@ -2,85 +2,118 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { 
+  ArrowLeft, UploadCloud, Trash2, Sparkles, 
+  Check, Lock, Shirt, Laptop, BookOpen, Palette, Frame, ShieldAlert 
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Upload, Trash2, Loader2, Image as ImageIcon } from 'lucide-react';
 
-export default function StudioCurator() {
-  const [artworks, setArtworks] = useState([]);
+const DESTINATIONS = [
+  { id: 'laptop', label: 'Laptop Gallery', icon: Laptop, room: 'Studio Den' },
+  { id: 'sketchbook', label: 'Drawing Pad Study', icon: BookOpen, room: 'Studio Den' },
+  { id: 'easel', label: 'Studio Easel (Focal)', icon: Palette, room: 'Studio Den' },
+  { id: 'wallArt', label: 'Wall Masterpiece', icon: Frame, room: 'Studio Den' },
+  { id: 'wardrobe_top', label: 'Wardrobe: Top / Outerwear', icon: Shirt, room: 'Dressing Room' },
+  { id: 'wardrobe_bottom', label: 'Wardrobe: Bottom / Skirt', icon: Shirt, room: 'Dressing Room' },
+  { id: 'vault', label: 'Corvid Chest (Patron Vault)', icon: Lock, room: 'Dressing Room' },
+];
+
+export default function StudioCuratorDashboard() {
+  const router = useRouter();
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
+
+  // Form State
   const [title, setTitle] = useState('');
-  const [medium, setMedium] = useState('Digital Fine Art & Acrylic Base');
+  const [mediumOrDetail, setMediumOrDetail] = useState('');
+  const [category, setCategory] = useState('laptop');
+  const [price, setPrice] = useState('');
+  const [rarity, setRarity] = useState('');
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    fetchArtworks();
-  }, []);
+  // Filter State
+  const [activeFilter, setActiveFilter] = useState('all');
 
-  const fetchArtworks = async () => {
+  const fetchItems = async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from('artworks')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (!error && data) {
-      setArtworks(data);
-    }
+    if (!error && data) setItems(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchItems();
+  }, []);
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0];
     if (selected) {
       setFile(selected);
-      setPreview(URL.createObjectURL(selected));
-      setMessage(`Selected: ${selected.name}`);
+      setPreviewUrl(URL.createObjectURL(selected));
     }
   };
 
   const handleUpload = async (e) => {
     e.preventDefault();
-    if (!file || !title.trim()) {
-      setMessage('Please provide both an artwork title and an image file.');
+    if (!file || !title) {
+      setMessage('Please provide an image and title.');
       return;
     }
 
     setUploading(true);
-    setMessage('Uploading canvas...');
+    setMessage('Uploading artifact to Supabase...');
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `atelier/${fileName}`;
 
+      // Upload file to Supabase storage bucket
       const { error: uploadError } = await supabase.storage
-        .from('gallery')
+        .from('artworks')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: publicUrlData } = supabase.storage
-        .from('gallery')
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('artworks')
         .getPublicUrl(filePath);
 
-      const imageUrl = publicUrlData.publicUrl;
+      const publicUrl = urlData.publicUrl;
 
-      const { data: newDoc, error: insertError } = await supabase
+      // Insert record
+      const { error: insertError } = await supabase
         .from('artworks')
-        .insert([{ title, medium, image_url: imageUrl }])
-        .select()
-        .single();
+        .insert([
+          {
+            title: title.trim(),
+            medium: mediumOrDetail.trim() || 'Atelier Original',
+            category: category,
+            price: price.trim() || null,
+            rarity: rarity.trim() || null,
+            image_url: publicUrl,
+          }
+        ]);
 
       if (insertError) throw insertError;
 
-      setArtworks((prev) => [newDoc, ...prev]);
+      setMessage('Artifact successfully curated and cataloged!');
       setTitle('');
+      setMediumOrDetail('');
+      setPrice('');
+      setRarity('');
       setFile(null);
-      setPreview(null);
-      setMessage(`"${title}" added to the atelier.`);
+      setPreviewUrl('');
+      fetchItems();
     } catch (err) {
       console.error(err);
       setMessage(`Upload error: ${err.message}`);
@@ -89,209 +122,289 @@ export default function StudioCurator() {
     }
   };
 
-  const handleDelete = async (artwork) => {
-    const confirmDelete = window.confirm(`Remove "${artwork.title}" from the atelier archive?`);
-    if (!confirmDelete) return;
-
+  const handleDelete = async (id, imageUrl) => {
+    if (!confirm('Are you sure you want to remove this piece from the atelier?')) return;
+    
     try {
-      const { error } = await supabase
-        .from('artworks')
-        .delete()
-        .eq('id', artwork.id);
-
-      if (error) throw error;
-
-      setArtworks((prev) => prev.filter((item) => item.id !== artwork.id));
-      setMessage(`"${artwork.title}" removed.`);
+      await supabase.from('artworks').delete().eq('id', id);
+      setItems(items.filter(item => item.id !== id));
     } catch (err) {
-      setMessage(`Delete error: ${err.message}`);
+      console.error(err);
     }
   };
 
+  const filteredItems = activeFilter === 'all' 
+    ? items 
+    : items.filter(item => (item.category || 'laptop') === activeFilter);
+
+  const isMerch = category.startsWith('wardrobe') || category === 'vault';
+
   return (
-    <main className="min-h-screen bg-stone-950 text-stone-100 p-4 sm:p-8 font-sans selection:bg-amber-900">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <main className="min-h-screen bg-[#070509] text-stone-200 font-sans p-4 sm:p-8 selection:bg-purple-950">
+      
+      {/* Top Header */}
+      <header className="max-w-7xl mx-auto flex items-center justify-between border-b border-stone-850 pb-5 mb-8">
+        <Link
+          href="/"
+          className="flex items-center gap-2 rounded-full border border-stone-800 bg-stone-900/90 px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white hover:border-purple-400 transition"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Return to Den</span>
+        </Link>
+
+        <div className="text-center">
+          <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-widest text-amber-200 uppercase">
+            Atelier Curator Matrix
+          </h1>
+          <p className="text-[10px] font-mono tracking-widest text-stone-500 uppercase mt-0.5">
+            Single Hub Universal Uploader & Dispatch
+          </p>
+        </div>
+
+        <Link
+          href="/wardrobe"
+          className="flex items-center gap-2 rounded-full border border-amber-600/40 bg-amber-950/40 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-950/70 transition"
+        >
+          <span>View Dressing Room</span>
+        </Link>
+      </header>
+
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Navigation */}
-        <div className="flex items-center justify-between border-b border-stone-800 pb-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-xs font-semibold text-stone-300 hover:text-white bg-stone-900 border border-stone-700 px-4 py-2 rounded-full transition"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Return to Den</span>
-          </Link>
-
-          <span className="text-xs font-mono tracking-widest text-stone-500 uppercase">
-            Curator Sanctum
-          </span>
-        </div>
-
-        {/* Lucky Memorial Card */}
-        <div className="rounded-2xl border border-stone-800 bg-stone-900/60 p-6 flex flex-col sm:flex-row items-center gap-6 shadow-xl">
-          <div className="relative shrink-0 w-28 h-28 rounded-2xl overflow-hidden border border-amber-600/30 bg-stone-950 flex items-center justify-center">
-            <img
-              src="/Lucky_wizard.png"
-              alt="Lucky"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-              className="h-full w-full object-cover"
-            />
-            {/* Fallback if lucky.png is not yet in public/ */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 text-stone-500 text-[10px]">
-              <span>In Memory of</span>
-              <span className="font-serif font-bold text-stone-300 text-xs">Lucky</span>
-            </div>
-          </div>
-
-          <div className="space-y-1 text-center sm:text-left flex-1">
-            <h1 className="font-serif text-xl font-bold text-stone-100">
-              Lucky's Atelier Sanctuary
-            </h1>
-            <p className="text-xs text-stone-400">
-              Archive curator for Minds Eye Butterfly. Preserving canvases and creative works.
+        {/* Left Column: Universal Upload Form */}
+        <div className="lg:col-span-5 rounded-3xl border border-stone-800 bg-stone-950/80 p-6 shadow-2xl backdrop-blur-md space-y-5">
+          <div className="border-b border-stone-800/80 pb-3">
+            <h2 className="font-serif text-base font-bold text-amber-100 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <span>Curate New Artifact</span>
+            </h2>
+            <p className="text-xs text-stone-400 mt-0.5">
+              Select destination to automatically route across rooms.
             </p>
-            {message && (
-              <p className="text-xs font-mono text-amber-300/90 pt-1">
-                {message}
-              </p>
-            )}
           </div>
-        </div>
 
-        {/* Clean Upload Form */}
-        <section className="rounded-2xl border border-stone-800 bg-stone-900/40 p-6 shadow-lg">
-          <h2 className="text-sm font-serif font-bold text-stone-200 mb-4 flex items-center gap-2">
-            <Upload className="h-4 w-4 text-amber-400" />
-            <span>Add Artwork to Atelier</span>
-          </h2>
+          <form onSubmit={handleUpload} className="space-y-4">
+            
+            {/* Destination Selector */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-wider text-stone-400">
+                Placement & Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full rounded-xl bg-stone-900 border border-stone-750 px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-amber-400"
+              >
+                {DESTINATIONS.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    [{d.room}] {d.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono text-stone-400 uppercase tracking-wider mb-1">
-                  Title
-                </label>
-                <input
-                  type="text"
-                  placeholder="Artwork title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full rounded-lg bg-stone-950 border border-stone-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-stone-400"
-                />
+            {/* Title */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-wider text-stone-400">
+                Title / Name
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Heavyweight Metamorphosis Hoodie"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="w-full rounded-xl bg-stone-900 border border-stone-750 px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {/* Medium or Fabric Specs */}
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-mono uppercase tracking-wider text-stone-400">
+                {isMerch ? 'Fabric / Material Detail' : 'Medium / Description'}
+              </label>
+              <input
+                type="text"
+                placeholder={isMerch ? "e.g. 450 GSM French Terry with silver stitch" : "e.g. Oil on Belgian Linen"}
+                value={mediumOrDetail}
+                onChange={(e) => setMediumOrDetail(e.target.value)}
+                className="w-full rounded-xl bg-stone-900 border border-stone-750 px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {/* Merch Specific Fields: Price & Rarity */}
+            {isMerch && (
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-amber-300/80">
+                    Price
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="$78"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    className="w-full rounded-xl bg-stone-900 border border-stone-750 px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-mono uppercase tracking-wider text-amber-300/80">
+                    Rarity / Edition
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 1-of-1 Archive"
+                    value={rarity}
+                    onChange={(e) => setRarity(e.target.value)}
+                    className="w-full rounded-xl bg-stone-900 border border-stone-750 px-3.5 py-2 text-xs text-white focus:outline-none focus:border-amber-400"
+                  />
+                </div>
               </div>
+            )}
 
-              <div>
-                <label className="block text-xs font-mono text-stone-400 uppercase tracking-wider mb-1">
-                  Medium
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Oil on Belgian Linen"
-                  value={medium}
-                  onChange={(e) => setMedium(e.target.value)}
-                  className="w-full rounded-lg bg-stone-950 border border-stone-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-stone-400"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono text-stone-400 uppercase tracking-wider mb-1">
-                  File
-                </label>
+            {/* Image File Selector */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[11px] font-mono uppercase tracking-wider text-stone-400">
+                Image Artifact
+              </label>
+              <div className="relative border-2 border-dashed border-stone-800 hover:border-purple-400/60 rounded-2xl p-4 text-center cursor-pointer transition bg-stone-900/40">
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="block w-full text-xs text-stone-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-stone-800 file:text-stone-200 hover:file:bg-stone-700 cursor-pointer"
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-              </div>
-
-              <button
-                type="submit"
-                disabled={uploading}
-                className="w-full py-2.5 rounded-lg bg-stone-100 hover:bg-white text-stone-950 font-semibold text-xs transition disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Saving...</span>
-                  </>
+                {previewUrl ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={previewUrl}
+                      alt="Upload Preview"
+                      className="h-32 w-auto object-contain rounded-lg border border-stone-700 shadow"
+                    />
+                    <span className="text-[10px] text-purple-300 font-mono">Click to change image</span>
+                  </div>
                 ) : (
-                  <span>Publish to Gallery</span>
+                  <div className="py-4 space-y-2">
+                    <UploadCloud className="w-8 h-8 mx-auto text-stone-500" />
+                    <p className="text-xs text-stone-400">Click or drag image file here</p>
+                    <p className="text-[10px] text-stone-500 font-mono">Supports PNG, JPG, WebP</p>
+                  </div>
                 )}
-              </button>
+              </div>
             </div>
 
-            <div className="flex items-center justify-center rounded-xl border border-stone-800 bg-stone-950 p-4 min-h-[180px]">
-              {preview ? (
-                <img
-                  src={preview}
-                  alt="Preview"
-                  className="max-h-48 max-w-full rounded object-contain"
-                />
-              ) : (
-                <div className="text-center text-stone-500 space-y-1">
-                  <ImageIcon className="h-6 w-6 mx-auto opacity-30" />
-                  <p className="text-xs font-mono">No canvas chosen</p>
-                </div>
-              )}
-            </div>
+            {message && (
+              <p className="text-xs font-mono text-amber-400 text-center">{message}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={uploading}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-600 via-fuchsia-600 to-amber-600 text-white font-serif font-bold text-xs uppercase tracking-widest hover:brightness-110 disabled:opacity-50 transition shadow-lg"
+            >
+              {uploading ? 'Processing Dispatch...' : 'Curate & Publish'}
+            </button>
           </form>
-        </section>
+        </div>
 
-        {/* Gallery Archive with Lucky's Bowl Discard */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-serif font-bold text-stone-200">
-              Current Gallery Works ({artworks.length})
-            </h2>
+        {/* Right Column: Curated Inventory Management */}
+        <div className="lg:col-span-7 space-y-4">
+          
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-3 py-1.5 rounded-full text-xs font-mono whitespace-nowrap transition ${
+                activeFilter === 'all'
+                  ? 'bg-amber-600 text-black font-bold'
+                  : 'bg-stone-900 border border-stone-800 text-stone-400 hover:border-stone-700'
+              }`}
+            >
+              All Items ({items.length})
+            </button>
+            {DESTINATIONS.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => setActiveFilter(d.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-mono whitespace-nowrap transition ${
+                  activeFilter === d.id
+                    ? 'bg-purple-600 text-white font-bold'
+                    : 'bg-stone-900 border border-stone-800 text-stone-400 hover:border-stone-700'
+                }`}
+              >
+                {d.label}
+              </button>
+            ))}
           </div>
 
+          {/* Item Grid */}
           {loading ? (
-            <div className="py-8 text-center text-stone-500 text-xs font-mono">
-              Loading archive...
+            <div className="py-20 text-center text-xs font-mono text-stone-500">
+              Loading atelier archive...
             </div>
-          ) : artworks.length === 0 ? (
-            <div className="p-8 rounded-xl border border-stone-800 bg-stone-900/30 text-center text-stone-500 text-xs font-mono">
-              No artworks stored yet.
+          ) : filteredItems.length === 0 ? (
+            <div className="rounded-3xl border border-stone-850 bg-stone-950/40 p-12 text-center text-stone-500 space-y-2">
+              <p className="text-xs">No artifacts cataloged in this category yet.</p>
+              <p className="text-[10px] font-mono">Use the form on the left to upload your first piece.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {artworks.map((art) => (
-                <div
-                  key={art.id}
-                  className="group rounded-xl border border-stone-800 bg-stone-900/60 p-3 flex flex-col justify-between"
-                >
-                  <div className="aspect-[4/3] w-full overflow-hidden rounded bg-black mb-2 flex items-center justify-center">
-                    <img
-                      src={art.image_url || art.imageUrl}
-                      alt={art.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredItems.map((item) => {
+                const dest = DESTINATIONS.find(d => d.id === (item.category || 'laptop'));
+                return (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-stone-800 bg-stone-950/90 p-4 flex flex-col justify-between space-y-3 shadow-lg hover:border-stone-750 transition"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono text-purple-400 border border-purple-500/30 px-2 py-0.5 rounded-full">
+                          {dest?.room}: {dest?.label}
+                        </span>
+                        {item.price && (
+                          <span className="text-xs font-serif font-bold text-amber-300">
+                            {item.price}
+                          </span>
+                        )}
+                      </div>
 
-                  <div className="flex items-center justify-between pt-1">
-                    <div className="truncate pr-2">
-                      <p className="font-serif font-bold text-xs text-stone-200 truncate">{art.title}</p>
-                      <p className="text-[10px] text-stone-400 italic truncate">{art.medium}</p>
+                      <div className="relative h-40 w-full rounded-xl overflow-hidden bg-stone-900 border border-stone-850 flex items-center justify-center">
+                        <img
+                          src={item.image_url || item.imageUrl}
+                          alt={item.title}
+                          className="h-full w-full object-contain p-2"
+                        />
+                      </div>
+
+                      <div>
+                        <h3 className="font-serif font-bold text-sm text-stone-200">{item.title}</h3>
+                        <p className="text-[11px] text-stone-400 line-clamp-1">{item.medium}</p>
+                        {item.rarity && (
+                          <span className="text-[9px] font-mono text-amber-400/90 mt-1 block">
+                            ★ {item.rarity}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <button
-                      onClick={() => handleDelete(art)}
-                      title="Discard to Lucky's bowl"
-                      className="p-1.5 rounded-lg border border-stone-800 hover:border-rose-900 bg-stone-950 text-stone-400 hover:text-rose-400 transition"
+                      onClick={() => handleDelete(item.id, item.image_url)}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg border border-red-900/50 bg-red-950/20 text-red-400 hover:bg-red-900/30 text-xs font-mono transition"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove Artifact</span>
                     </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
-        </section>
+
+        </div>
 
       </div>
+
     </main>
   );
 }

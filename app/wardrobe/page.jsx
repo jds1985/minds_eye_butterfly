@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X } from 'lucide-react';
 
 const WARDROBE_TOPS = [
@@ -95,7 +96,40 @@ export default function WardrobeSanctum() {
   const [activeModal, setActiveModal] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
 
+  const [allTops, setAllTops] = useState(WARDROBE_TOPS);
+  const [allBottoms, setAllBottoms] = useState(WARDROBE_BOTTOMS);
+  const [vaultRelics, setVaultRelics] = useState(VAULT_ITEMS);
+
   const [selectedTop, setSelectedTop] = useState(WARDROBE_TOPS[0]);
+  const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
+
+  useEffect(() => {
+    async function loadWardrobe() {
+      try {
+        const { data, error } = await supabase.from("artworks").select("*");
+        if (!error && data && data.length > 0) {
+          const tops = data.filter(i => i.category === "wardrobe_top");
+          const bottoms = data.filter(i => i.category === "wardrobe_bottom");
+          const vault = data.filter(i => i.category === "vault");
+
+          if (tops.length > 0) {
+            setAllTops(tops.map(t => ({ id: t.id, name: t.title, color: t.medium, price: t.price || "$65", detail: t.medium, image: t.image_url })));
+            setSelectedTop({ id: tops[0].id, name: tops[0].title, color: tops[0].medium, price: tops[0].price || "$65", detail: tops[0].medium, image: tops[0].image_url });
+          }
+          if (bottoms.length > 0) {
+            setAllBottoms(bottoms.map(b => ({ id: b.id, name: b.title, color: b.medium, price: b.price || "$65", detail: b.medium, image: b.image_url })));
+            setSelectedBottom({ id: bottoms[0].id, name: bottoms[0].title, color: bottoms[0].medium, price: bottoms[0].price || "$65", detail: bottoms[0].medium, image: bottoms[0].image_url });
+          }
+          if (vault.length > 0) {
+            setVaultRelics(vault.map(v => ({ id: v.id, name: v.title, rarity: v.rarity || "Patron Exclusive", detail: v.medium, image: v.image_url })));
+          }
+        }
+      } catch (e) {
+        console.error("Wardrobe Supabase error:", e);
+      }
+    }
+    loadWardrobe();
+  }, []);
   const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
 
   const [chestOpen, setChestOpen] = useState(false);
@@ -404,7 +438,7 @@ export default function WardrobeSanctum() {
                   <span>2 Limited Relics Found</span>
                 </div>
 
-                {VAULT_ITEMS.map((item) => (
+                {vaultRelics.map((item) => (
                   <div
                     key={item.id}
                     className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 space-y-1.5"
@@ -475,7 +509,7 @@ export default function WardrobeSanctum() {
               <div>
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Top</span>
                 <div className="space-y-1.5 mt-1.5">
-                  {WARDROBE_TOPS.map((t) => (
+                  {allTops.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => setSelectedTop(t)}
@@ -495,7 +529,7 @@ export default function WardrobeSanctum() {
               <div>
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Bottom</span>
                 <div className="space-y-1.5 mt-1.5">
-                  {WARDROBE_BOTTOMS.map((b) => (
+                  {allBottoms.map((b) => (
                     <button
                       key={b.id}
                       onClick={() => setSelectedBottom(b)}
@@ -538,7 +572,7 @@ export default function WardrobeSanctum() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4 overflow-y-auto pr-1">
-              {[...WARDROBE_TOPS, ...WARDROBE_BOTTOMS].map((item) => (
+              {[...allTops, ...allBottoms].map((item) => (
                 <div
                   key={item.id}
                   className="p-4 rounded-xl border border-stone-850 bg-stone-900/60 flex flex-col justify-between space-y-2 hover:border-purple-400/50 transition"
