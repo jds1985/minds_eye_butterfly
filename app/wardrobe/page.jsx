@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X, Shirt, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X } from 'lucide-react';
 
 const WARDROBE_TOPS = [
   {
@@ -92,16 +92,145 @@ const ZONES = [
 ];
 
 export default function WardrobeSanctum() {
-  const [activeModal, setActiveModal] = useState(null); // 'chest' | 'mannequin' | 'armoire' | null
+  const [activeModal, setActiveModal] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
 
   const [selectedTop, setSelectedTop] = useState(WARDROBE_TOPS[0]);
   const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
 
-  // Crow Chest States
   const [chestOpen, setChestOpen] = useState(false);
   const [keyInput, setKeyInput] = useState('');
   const [chestMessage, setChestMessage] = useState('');
+
+  const canvasRef = useRef(null);
+
+  // Dynamic Window Rain & Rare Flying Crows Engine
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    let animationId;
+    let time = 0;
+
+    // Window bounds on 1920x1080 canvas
+    const WIN_LEFT = 350;
+    const WIN_TOP = 20;
+    const WIN_WIDTH = 680;
+    const WIN_HEIGHT = 650;
+
+    // 120 falling rain drops strictly mapped outside the window
+    const raindrops = Array.from({ length: 120 }, () => ({
+      x: WIN_LEFT + Math.random() * WIN_WIDTH,
+      y: WIN_TOP + Math.random() * WIN_HEIGHT,
+      len: Math.random() * 22 + 14,
+      speedY: Math.random() * 14 + 16,
+      speedX: -1.2,
+      opacity: Math.random() * 0.4 + 0.15,
+      width: Math.random() * 1.2 + 0.6,
+    }));
+
+    // Occasional crow schedule
+    let crowActive = false;
+    let crow = { x: WIN_WIDTH + 100, y: 180, scale: 0.55, speedX: -1.6, speedY: 0.15, wingCycle: 0 };
+    let nextCrowTime = 120; // First flight in a few seconds
+
+    const drawCrow = (x, y, scale, wingPhase) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = 'rgba(15, 12, 20, 0.78)';
+      const wingFlap = Math.sin(wingPhase) * 8;
+
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 6, 2.5, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Left wing
+      ctx.beginPath();
+      ctx.moveTo(-1, -1);
+      ctx.quadraticCurveTo(-5, -8 + wingFlap, -12, -4 + wingFlap);
+      ctx.quadraticCurveTo(-6, -1, 0, 0);
+      ctx.fill();
+
+      // Right wing
+      ctx.beginPath();
+      ctx.moveTo(1, -1);
+      ctx.quadraticCurveTo(5, -8 + wingFlap, 12, -4 + wingFlap);
+      ctx.quadraticCurveTo(6, -1, 0, 0);
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    const render = () => {
+      ctx.clearRect(0, 0, 1920, 1080);
+      time += 0.02;
+
+      // Clip canvas strictly to the arched gothic window tracery area
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
+      ctx.clip();
+
+      // 1. Rare Occasional Crow Flight (infrequent, every 15-25 seconds)
+      if (!crowActive) {
+        nextCrowTime -= 1;
+        if (nextCrowTime <= 0) {
+          crowActive = true;
+          crow.x = WIN_LEFT + WIN_WIDTH + 40;
+          crow.y = WIN_TOP + 120 + Math.random() * 160;
+          crow.scale = 0.45 + Math.random() * 0.25;
+          crow.speedX = -(1.2 + Math.random() * 0.8);
+          crow.wingCycle = 0;
+        }
+      } else {
+        crow.x += crow.speedX;
+        crow.y += crow.speedY;
+        crow.wingCycle += 0.14;
+        drawCrow(crow.x, crow.y, crow.scale, crow.wingCycle);
+
+        if (crow.x < WIN_LEFT - 60) {
+          crowActive = false;
+          nextCrowTime = 800 + Math.random() * 600; // Wait 15-25 seconds before next one
+        }
+      }
+
+      // 2. Realistic Angled Window Rain
+      ctx.strokeStyle = 'rgba(215, 230, 255, 0.45)';
+      raindrops.forEach((drop) => {
+        drop.y += drop.speedY;
+        drop.x += drop.speedX;
+
+        if (drop.y > WIN_TOP + WIN_HEIGHT) {
+          drop.y = WIN_TOP - 20;
+          drop.x = WIN_LEFT + Math.random() * WIN_WIDTH;
+        }
+
+        ctx.globalAlpha = drop.opacity;
+        ctx.lineWidth = drop.width;
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x + drop.speedX * 2, drop.y + drop.len);
+        ctx.stroke();
+      });
+
+      // 3. Subtle Mist Drift across window
+      const mistGlow = ctx.createLinearGradient(WIN_LEFT, WIN_TOP, WIN_LEFT, WIN_TOP + WIN_HEIGHT);
+      mistGlow.addColorStop(0, 'rgba(40, 25, 55, 0.08)');
+      mistGlow.addColorStop(0.5, 'rgba(90, 80, 110, 0.04)');
+      mistGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = mistGlow;
+      ctx.fillRect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
+
+      ctx.restore();
+
+      animationId = requestAnimationFrame(render);
+    };
+
+    render();
+    return () => cancelAnimationFrame(animationId);
+  }, []);
 
   const handleUnlockChest = (e) => {
     e.preventDefault();
@@ -150,6 +279,14 @@ export default function WardrobeSanctum() {
           src="/Dressing_room.jpg"
           alt="The Dressing Room Atelier"
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+        />
+
+        {/* Live Rain & Crow Flight Canvas */}
+        <canvas
+          ref={canvasRef}
+          width={1920}
+          height={1080}
+          className="absolute inset-0 h-full w-full pointer-events-none z-10"
         />
 
         {/* Interactive Hotspot Pins */}
@@ -298,7 +435,6 @@ export default function WardrobeSanctum() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Mannequin Preview */}
             <div className="w-full md:w-1/2 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-stone-800 pb-4 md:pb-0 md:pr-6">
               <div className="text-center space-y-0.5">
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
@@ -313,13 +449,11 @@ export default function WardrobeSanctum() {
                 <div className="w-7 h-7 rounded-full border border-amber-600/50 bg-stone-900 mb-1 shadow" />
                 <div className="w-2 h-4 bg-stone-700" />
 
-                {/* Top */}
                 <div className="relative w-36 h-28 rounded-t-2xl rounded-b-lg border border-purple-500/50 bg-stone-900 p-2 text-center flex flex-col justify-between shadow-lg">
                   <span className="text-[10px] font-mono text-amber-200 truncate">{selectedTop.name}</span>
                   <span className="text-xs font-serif font-bold text-purple-300">{selectedTop.price}</span>
                 </div>
 
-                {/* Bottom */}
                 <div className="relative w-28 h-32 -mt-1 rounded-b-xl border border-stone-700 bg-stone-950 p-2 text-center flex flex-col justify-between shadow-md">
                   <span className="text-[10px] font-mono text-stone-300 truncate">{selectedBottom.name}</span>
                   <span className="text-xs font-serif font-bold text-stone-200">{selectedBottom.price}</span>
@@ -337,7 +471,6 @@ export default function WardrobeSanctum() {
               </div>
             </div>
 
-            {/* Quick Switcher Controls */}
             <div className="w-full md:w-1/2 space-y-4">
               <div>
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Top</span>
