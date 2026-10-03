@@ -78,14 +78,14 @@ export default function StudioCuratorDashboard() {
 
       // Upload file to Supabase storage bucket
       const { error: uploadError } = await supabase.storage
-        .from('artworks')
+        .from('gallery')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: urlData } = supabase.storage
-        .from('artworks')
+        .from('gallery')
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
