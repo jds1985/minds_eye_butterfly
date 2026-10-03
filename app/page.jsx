@@ -28,6 +28,13 @@ const FALLBACK_ARTWORKS = [
 
 const INTERACTIVE_ZONES = [
   {
+    id: 'wardrobe',
+    label: 'Atelier Wardrobe',
+    sub: 'Apparel & Vault',
+    box: { left: '8%', top: '56%', width: '24%', height: '36%' },
+    pin: { left: '20%', top: '70%' }
+  },
+  {
     id: 'laptop',
     label: 'Atelier Laptop',
     sub: 'Portfolio Exhibition',
@@ -308,10 +315,10 @@ export default function AtelierEngine() {
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-white font-sans flex items-center justify-center">
       
-      {/* Centered Logo Header */}
+      {/* Top Header: Split Iridescent Cursive Title & Centered Butterfly Logo */}
       <header
         className={`absolute top-1 sm:top-2 left-0 right-0 z-40 flex flex-col items-center justify-center pointer-events-none transition-all duration-700 ${
-          activePortal !== "room" ? "opacity-0 -translate-y-8" : "opacity-100 translate-y-0"
+          activePortal !== 'room' ? 'opacity-0 -translate-y-8' : 'opacity-100 translate-y-0'
         }`}
       >
         <div className="flex flex-col items-center justify-center select-none px-4">
@@ -409,7 +416,11 @@ export default function AtelierEngine() {
                     onMouseLeave={() => setHoveredZone(null)}
                     onClick={() => {
                       setHoveredZone(null);
-                      setActivePortal(zone.id);
+                      if (zone.id === 'wardrobe') {
+                        window.location.href = '/wardrobe';
+                      } else {
+                        setActivePortal(zone.id);
+                      }
                     }}
                     style={{
                       left: zone.box.left,
