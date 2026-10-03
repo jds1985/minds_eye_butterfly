@@ -12,6 +12,7 @@ const FALLBACK_TOPS = [
     color: 'Washed Charcoal',
     price: '$78',
     detail: '450 GSM French Terry with embroidered iridescent crest',
+    image: null,
   },
   {
     id: 'top-2',
@@ -19,13 +20,7 @@ const FALLBACK_TOPS = [
     color: 'Vintage Bone',
     price: '$42',
     detail: 'Silkscreened botanical butterfly plate on ring-spun cotton',
-  },
-  {
-    id: 'top-3',
-    name: 'Sanctum Velvet Draped Kimono',
-    color: 'Midnight Violet',
-    price: '$110',
-    detail: 'Plush velvet outer with gilded silk lining',
+    image: null,
   },
 ];
 
@@ -36,6 +31,7 @@ const FALLBACK_BOTTOMS = [
     color: 'Iron Slate',
     price: '$68',
     detail: 'Relaxed fit with reinforced brush pockets and copper rivets',
+    image: null,
   },
   {
     id: 'bot-2',
@@ -43,13 +39,7 @@ const FALLBACK_BOTTOMS = [
     color: 'Washed Indigo',
     price: '$82',
     detail: 'Custom brass button fly with subtle atelier paint splatter accents',
-  },
-  {
-    id: 'bot-3',
-    name: 'Sanctum Draped Linen Skirt',
-    color: 'Raven Black',
-    price: '$64',
-    detail: 'Layered organic linen weave with asymmetric raw hem',
+    image: null,
   },
 ];
 
@@ -59,12 +49,14 @@ const FALLBACK_VAULT = [
     name: '№ 01/05 Hand-Gilded Silk Shroud',
     rarity: '1-of-5 Atelier Archive',
     detail: 'Hand-finished by the artist with 24k gold foil leaf accents.',
+    image: null,
   },
   {
     id: 'vault-2',
     name: 'Lucky Memorial Enamel Relic Pin',
     rarity: 'Patron Exclusive',
     detail: 'Heavy antique brass pin cast in solid metal with stained glass enamel.',
+    image: null,
   },
 ];
 
@@ -96,7 +88,6 @@ export default function WardrobeSanctum() {
   const [activeModal, setActiveModal] = useState(null);
   const [hoveredZone, setHoveredZone] = useState(null);
 
-  // Dynamic state loaded from Supabase with fallbacks
   const [allTops, setAllTops] = useState(FALLBACK_TOPS);
   const [allBottoms, setAllBottoms] = useState(FALLBACK_BOTTOMS);
   const [vaultRelics, setVaultRelics] = useState(FALLBACK_VAULT);
@@ -110,11 +101,14 @@ export default function WardrobeSanctum() {
 
   const canvasRef = useRef(null);
 
-  // Load live uploads from Supabase
   useEffect(() => {
     async function loadWardrobe() {
       try {
-        const { data, error } = await supabase.from('artworks').select('*');
+        const { data, error } = await supabase
+          .from('artworks')
+          .select('*')
+          .order('created_at', { ascending: false });
+
         if (!error && data && data.length > 0) {
           const tops = data.filter((i) => i.category === 'wardrobe_top');
           const bottoms = data.filter((i) => i.category === 'wardrobe_bottom');
@@ -126,7 +120,7 @@ export default function WardrobeSanctum() {
               name: t.title,
               color: t.medium || 'Atelier Textile',
               price: t.price || '$75',
-              detail: t.medium || 'Exclusive release',
+              detail: t.medium || 'Curated Piece',
               image: t.image_url || t.imageUrl,
             }));
             setAllTops(mappedTops);
@@ -139,7 +133,7 @@ export default function WardrobeSanctum() {
               name: b.title,
               color: b.medium || 'Atelier Textile',
               price: b.price || '$65',
-              detail: b.medium || 'Exclusive release',
+              detail: b.medium || 'Curated Piece',
               image: b.image_url || b.imageUrl,
             }));
             setAllBottoms(mappedBottoms);
@@ -165,7 +159,7 @@ export default function WardrobeSanctum() {
     loadWardrobe();
   }, []);
 
-  // Rain & Rare Crow Flight Canvas Engine
+  // Window Rain & Flying Crow Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -174,31 +168,32 @@ export default function WardrobeSanctum() {
     let animationId;
     let time = 0;
 
-    const WIN_LEFT = 350;
-    const WIN_TOP = 20;
-    const WIN_WIDTH = 680;
-    const WIN_HEIGHT = 650;
+    // Arched Window geometry (1920x1080 coordinates)
+    const WIN_LEFT = 370;
+    const WIN_RIGHT = 970;
+    const WIN_TOP = 10;
+    const WIN_SILL = 520; // Stops above table, candles, and floor
 
-    const raindrops = Array.from({ length: 120 }, () => ({
-      x: WIN_LEFT + Math.random() * WIN_WIDTH,
-      y: WIN_TOP + Math.random() * WIN_HEIGHT,
-      len: Math.random() * 22 + 14,
-      speedY: Math.random() * 14 + 16,
-      speedX: -1.2,
-      opacity: Math.random() * 0.4 + 0.15,
-      width: Math.random() * 1.2 + 0.6,
+    const raindrops = Array.from({ length: 90 }, () => ({
+      x: WIN_LEFT + Math.random() * (WIN_RIGHT - WIN_LEFT),
+      y: WIN_TOP + Math.random() * (WIN_SILL - WIN_TOP),
+      len: Math.random() * 18 + 10,
+      speedY: Math.random() * 12 + 14,
+      speedX: -1.0,
+      opacity: Math.random() * 0.35 + 0.12,
+      width: Math.random() * 1.1 + 0.5,
     }));
 
     let crowActive = false;
-    let crow = { x: WIN_WIDTH + 100, y: 180, scale: 0.55, speedX: -1.6, speedY: 0.15, wingCycle: 0 };
-    let nextCrowTime = 120;
+    let crow = { x: WIN_RIGHT + 50, y: 160, scale: 0.5, speedX: -1.4, speedY: 0.1, wingCycle: 0 };
+    let nextCrowTime = 180;
 
     const drawCrow = (x, y, scale, wingPhase) => {
       ctx.save();
       ctx.translate(x, y);
       ctx.scale(scale, scale);
-      ctx.fillStyle = 'rgba(15, 12, 20, 0.78)';
-      const wingFlap = Math.sin(wingPhase) * 8;
+      ctx.fillStyle = 'rgba(12, 10, 16, 0.8)';
+      const wingFlap = Math.sin(wingPhase) * 7;
 
       ctx.beginPath();
       ctx.ellipse(0, 0, 6, 2.5, -0.1, 0, Math.PI * 2);
@@ -223,19 +218,26 @@ export default function WardrobeSanctum() {
       ctx.clearRect(0, 0, 1920, 1080);
       time += 0.02;
 
+      // True Gothic Arch Clip: curves across the top and terminates at sill
       ctx.save();
       ctx.beginPath();
-      ctx.rect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
+      ctx.moveTo(WIN_LEFT, WIN_SILL);
+      ctx.lineTo(WIN_LEFT, WIN_TOP + 230);
+      ctx.quadraticCurveTo(WIN_LEFT + 80, WIN_TOP + 10, (WIN_LEFT + WIN_RIGHT) / 2, WIN_TOP);
+      ctx.quadraticCurveTo(WIN_RIGHT - 80, WIN_TOP + 10, WIN_RIGHT, WIN_TOP + 230);
+      ctx.lineTo(WIN_RIGHT, WIN_SILL);
+      ctx.closePath();
       ctx.clip();
 
+      // Rare Crow Flight
       if (!crowActive) {
         nextCrowTime -= 1;
         if (nextCrowTime <= 0) {
           crowActive = true;
-          crow.x = WIN_LEFT + WIN_WIDTH + 40;
-          crow.y = WIN_TOP + 120 + Math.random() * 160;
-          crow.scale = 0.45 + Math.random() * 0.25;
-          crow.speedX = -(1.2 + Math.random() * 0.8);
+          crow.x = WIN_RIGHT + 30;
+          crow.y = WIN_TOP + 100 + Math.random() * 140;
+          crow.scale = 0.4 + Math.random() * 0.25;
+          crow.speedX = -(1.2 + Math.random() * 0.6);
           crow.wingCycle = 0;
         }
       } else {
@@ -244,20 +246,21 @@ export default function WardrobeSanctum() {
         crow.wingCycle += 0.14;
         drawCrow(crow.x, crow.y, crow.scale, crow.wingCycle);
 
-        if (crow.x < WIN_LEFT - 60) {
+        if (crow.x < WIN_LEFT - 40) {
           crowActive = false;
-          nextCrowTime = 800 + Math.random() * 600;
+          nextCrowTime = 900 + Math.random() * 700; // 15-30 second delay
         }
       }
 
-      ctx.strokeStyle = 'rgba(215, 230, 255, 0.45)';
+      // Rain Streaks
+      ctx.strokeStyle = 'rgba(210, 225, 255, 0.4)';
       raindrops.forEach((drop) => {
         drop.y += drop.speedY;
         drop.x += drop.speedX;
 
-        if (drop.y > WIN_TOP + WIN_HEIGHT) {
-          drop.y = WIN_TOP - 20;
-          drop.x = WIN_LEFT + Math.random() * WIN_WIDTH;
+        if (drop.y > WIN_SILL) {
+          drop.y = WIN_TOP - 10;
+          drop.x = WIN_LEFT + Math.random() * (WIN_RIGHT - WIN_LEFT);
         }
 
         ctx.globalAlpha = drop.opacity;
@@ -267,13 +270,6 @@ export default function WardrobeSanctum() {
         ctx.lineTo(drop.x + drop.speedX * 2, drop.y + drop.len);
         ctx.stroke();
       });
-
-      const mistGlow = ctx.createLinearGradient(WIN_LEFT, WIN_TOP, WIN_LEFT, WIN_TOP + WIN_HEIGHT);
-      mistGlow.addColorStop(0, 'rgba(40, 25, 55, 0.08)');
-      mistGlow.addColorStop(0.5, 'rgba(90, 80, 110, 0.04)');
-      mistGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-      ctx.fillStyle = mistGlow;
-      ctx.fillRect(WIN_LEFT, WIN_TOP, WIN_WIDTH, WIN_HEIGHT);
 
       ctx.restore();
       animationId = requestAnimationFrame(render);
@@ -297,7 +293,7 @@ export default function WardrobeSanctum() {
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-stone-200 font-sans flex items-center justify-center">
       
-      {/* Top Floating Atelier Bar */}
+      {/* Top Floating Header */}
       <header className="absolute top-3 left-0 right-0 z-40 flex items-center justify-between px-6 pointer-events-auto">
         <Link
           href="/"
@@ -333,6 +329,7 @@ export default function WardrobeSanctum() {
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
         />
 
+        {/* Rain strictly clipped to gothic window */}
         <canvas
           ref={canvasRef}
           width={1920}
@@ -402,7 +399,7 @@ export default function WardrobeSanctum() {
       {/* MODAL 1: CROW CHEST & PATRON VAULT */}
       {activeModal === 'chest' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-2xl border-2 border-amber-600/50 bg-stone-950/95 p-6 shadow-[0_0_50px_rgba(217,119,6,0.3)] space-y-4">
+          <div className="relative w-full max-w-lg rounded-2xl border-2 border-amber-600/50 bg-stone-950/95 p-6 shadow-[0_0_50px_rgba(217,119,6,0.3)] space-y-4">
             <button
               onClick={() => setActiveModal(null)}
               className="absolute top-4 right-4 text-stone-400 hover:text-white"
@@ -449,7 +446,7 @@ export default function WardrobeSanctum() {
                 </button>
               </form>
             ) : (
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 pt-2 max-h-[60vh] overflow-y-auto">
                 <div className="flex items-center justify-between text-xs text-emerald-400 font-mono pb-1 border-b border-stone-850">
                   <span className="flex items-center gap-1.5"><Unlock className="w-3.5 h-3.5" /> Vault Unlocked</span>
                   <span>{vaultRelics.length} Relics Found</span>
@@ -458,15 +455,22 @@ export default function WardrobeSanctum() {
                 {vaultRelics.map((item) => (
                   <div
                     key={item.id}
-                    className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 space-y-1.5"
+                    className="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 flex gap-4 items-center"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-serif font-bold text-xs text-amber-100">{item.name}</span>
-                      <span className="text-[9px] font-mono text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                        {item.rarity}
-                      </span>
+                    {item.image && (
+                      <div className="h-16 w-16 rounded-lg bg-stone-900 border border-amber-500/30 overflow-hidden shrink-0 flex items-center justify-center">
+                        <img src={item.image} alt={item.name} className="h-full w-full object-contain p-1" />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-serif font-bold text-xs text-amber-100">{item.name}</span>
+                        <span className="text-[9px] font-mono text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                          {item.rarity}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-400 leading-relaxed">{item.detail}</p>
                     </div>
-                    <p className="text-[11px] text-stone-400 leading-relaxed">{item.detail}</p>
                   </div>
                 ))}
               </div>
@@ -486,6 +490,7 @@ export default function WardrobeSanctum() {
               <X className="w-5 h-5" />
             </button>
 
+            {/* Mannequin Preview */}
             <div className="w-full md:w-1/2 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-stone-800 pb-4 md:pb-0 md:pr-6">
               <div className="text-center space-y-0.5">
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
@@ -496,33 +501,47 @@ export default function WardrobeSanctum() {
                 </h3>
               </div>
 
-              <div className="relative w-48 h-64 flex flex-col items-center justify-center my-4">
-                <div className="w-7 h-7 rounded-full border border-amber-600/50 bg-stone-900 mb-1 shadow" />
+              <div className="relative w-52 h-64 flex flex-col items-center justify-center my-4">
+                {/* Top Garment Preview */}
+                <div className="relative w-44 h-32 rounded-t-2xl rounded-b-lg border border-purple-500/50 bg-stone-900/90 p-2 text-center flex flex-col justify-between shadow-xl overflow-hidden">
+                  {selectedTop?.image ? (
+                    <img src={selectedTop.image} alt={selectedTop.name} className="h-16 w-full object-contain mx-auto" />
+                  ) : (
+                    <div className="h-12 w-12 mx-auto rounded-full bg-stone-800/80 flex items-center justify-center text-xs text-stone-500">Form</div>
+                  )}
+                  <div className="border-t border-stone-800/80 pt-1">
+                    <span className="text-[10px] font-mono text-amber-200 truncate block">{selectedTop?.name}</span>
+                    <span className="text-xs font-serif font-bold text-purple-300">{selectedTop?.price}</span>
+                  </div>
+                </div>
+
+                {/* Bottom Garment Preview */}
+                <div className="relative w-36 h-28 -mt-1 rounded-b-xl border border-stone-700 bg-stone-950 p-2 text-center flex flex-col justify-between shadow-md overflow-hidden">
+                  {selectedBottom?.image ? (
+                    <img src={selectedBottom.image} alt={selectedBottom.name} className="h-14 w-full object-contain mx-auto" />
+                  ) : (
+                    <div className="h-10 w-10 mx-auto rounded-full bg-stone-900 flex items-center justify-center text-[10px] text-stone-600">Trouser</div>
+                  )}
+                  <div className="border-t border-stone-850 pt-1">
+                    <span className="text-[10px] font-mono text-stone-300 truncate block">{selectedBottom?.name}</span>
+                    <span className="text-xs font-serif font-bold text-stone-200">{selectedBottom?.price}</span>
+                  </div>
+                </div>
+
                 <div className="w-2 h-4 bg-stone-700" />
-
-                <div className="relative w-36 h-28 rounded-t-2xl rounded-b-lg border border-purple-500/50 bg-stone-900 p-2 text-center flex flex-col justify-between shadow-lg">
-                  <span className="text-[10px] font-mono text-amber-200 truncate">{selectedTop.name}</span>
-                  <span className="text-xs font-serif font-bold text-purple-300">{selectedTop.price}</span>
-                </div>
-
-                <div className="relative w-28 h-32 -mt-1 rounded-b-xl border border-stone-700 bg-stone-950 p-2 text-center flex flex-col justify-between shadow-md">
-                  <span className="text-[10px] font-mono text-stone-300 truncate">{selectedBottom.name}</span>
-                  <span className="text-xs font-serif font-bold text-stone-200">{selectedBottom.price}</span>
-                </div>
-
-                <div className="w-2 h-8 bg-stone-700" />
                 <div className="w-16 h-1.5 bg-stone-600 rounded-full" />
               </div>
 
               <div className="w-full pt-2 flex items-center justify-between text-xs border-t border-stone-850">
-                <span className="text-stone-400">Total:</span>
+                <span className="text-stone-400">Total Ensemble:</span>
                 <span className="font-serif font-bold text-amber-300 text-sm">
                   ${parseInt((selectedTop?.price || '$0').replace(/[^0-9]/g, '') || 0) + parseInt((selectedBottom?.price || '$0').replace(/[^0-9]/g, '') || 0)}
                 </span>
               </div>
             </div>
 
-            <div className="w-full md:w-1/2 space-y-4">
+            {/* Quick Switcher Controls */}
+            <div className="w-full md:w-1/2 space-y-4 max-h-[65vh] overflow-y-auto pr-1">
               <div>
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Top</span>
                 <div className="space-y-1.5 mt-1.5">
@@ -530,13 +549,21 @@ export default function WardrobeSanctum() {
                     <button
                       key={t.id}
                       onClick={() => setSelectedTop(t)}
-                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center gap-2.5 transition ${
                         selectedTop?.id === t.id
                           ? 'border-purple-400 bg-purple-950/40 text-white'
                           : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
                       }`}
                     >
-                      <span className="font-medium truncate">{t.name}</span>
+                      {t.image ? (
+                        <img src={t.image} alt={t.name} className="h-9 w-9 object-contain rounded bg-stone-950 p-0.5 border border-stone-800" />
+                      ) : (
+                        <div className="h-9 w-9 rounded bg-stone-950 border border-stone-800 shrink-0" />
+                      )}
+                      <div className="flex-1 truncate">
+                        <span className="font-medium truncate block">{t.name}</span>
+                        <span className="text-[10px] text-stone-500 font-mono">{t.color}</span>
+                      </div>
                       <span className="font-bold text-amber-300 pl-2">{t.price}</span>
                     </button>
                   ))}
@@ -550,13 +577,21 @@ export default function WardrobeSanctum() {
                     <button
                       key={b.id}
                       onClick={() => setSelectedBottom(b)}
-                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center gap-2.5 transition ${
                         selectedBottom?.id === b.id
                           ? 'border-amber-400 bg-amber-950/30 text-white'
                           : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
                       }`}
                     >
-                      <span className="font-medium truncate">{b.name}</span>
+                      {b.image ? (
+                        <img src={b.image} alt={b.name} className="h-9 w-9 object-contain rounded bg-stone-950 p-0.5 border border-stone-800" />
+                      ) : (
+                        <div className="h-9 w-9 rounded bg-stone-950 border border-stone-800 shrink-0" />
+                      )}
+                      <div className="flex-1 truncate">
+                        <span className="font-medium truncate block">{b.name}</span>
+                        <span className="text-[10px] text-stone-500 font-mono">{b.color}</span>
+                      </div>
                       <span className="font-bold text-amber-300 pl-2">{b.price}</span>
                     </button>
                   ))}
@@ -570,7 +605,7 @@ export default function WardrobeSanctum() {
       {/* MODAL 3: WARDROBE ARMOIRE CATALOG */}
       {activeModal === 'armoire' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-3xl rounded-3xl border border-stone-800 bg-stone-950/95 p-6 shadow-2xl max-h-[85vh] flex flex-col justify-between">
+          <div className="relative w-full max-w-4xl rounded-3xl border border-stone-800 bg-stone-950/95 p-6 shadow-2xl max-h-[85vh] flex flex-col justify-between">
             <div className="flex items-center justify-between border-b border-stone-800 pb-3">
               <div>
                 <h3 className="font-serif text-lg font-bold text-amber-100">
@@ -588,19 +623,28 @@ export default function WardrobeSanctum() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4 overflow-y-auto pr-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 my-4 overflow-y-auto pr-1">
               {[...allTops, ...allBottoms].map((item) => (
                 <div
                   key={item.id}
-                  className="p-4 rounded-xl border border-stone-850 bg-stone-900/60 flex flex-col justify-between space-y-2 hover:border-purple-400/50 transition"
+                  className="p-4 rounded-xl border border-stone-850 bg-stone-900/60 flex flex-col justify-between space-y-3 hover:border-purple-400/50 transition"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-serif font-bold text-sm text-stone-100">{item.name}</h4>
-                      <span className="font-serif font-bold text-sm text-amber-300">{item.price}</span>
+                  <div className="space-y-2">
+                    <div className="relative h-36 w-full rounded-lg bg-stone-950 border border-stone-800 flex items-center justify-center overflow-hidden">
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="h-full w-full object-contain p-2" />
+                      ) : (
+                        <span className="text-xs text-stone-600 font-mono">No Image Asset</span>
+                      )}
                     </div>
+
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-serif font-bold text-sm text-stone-100 truncate">{item.name}</h4>
+                      <span className="font-serif font-bold text-sm text-amber-300 ml-2">{item.price}</span>
+                    </div>
+
                     <span className="text-[10px] font-mono text-stone-400 italic block">{item.color}</span>
-                    <p className="text-[11px] text-stone-400 leading-snug">{item.detail}</p>
+                    <p className="text-[11px] text-stone-400 leading-snug line-clamp-2">{item.detail}</p>
                   </div>
 
                   <button
@@ -609,7 +653,7 @@ export default function WardrobeSanctum() {
                       else setSelectedBottom(item);
                       setActiveModal('mannequin');
                     }}
-                    className="w-full mt-2 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-xs font-serif text-purple-200 hover:bg-purple-900/50 transition"
+                    className="w-full py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-xs font-serif text-purple-200 hover:bg-purple-900/50 transition"
                   >
                     Try on Fitting Form →
                   </button>
