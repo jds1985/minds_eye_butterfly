@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, Feather } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X, Shirt, ShoppingBag } from 'lucide-react';
 
 const WARDROBE_TOPS = [
   {
@@ -67,125 +67,206 @@ const VAULT_ITEMS = [
   },
 ];
 
+const ZONES = [
+  {
+    id: 'chest',
+    label: 'Corvid Antique Chest',
+    sub: 'Patron Locked Vault',
+    box: { left: '3%', top: '48%', width: '25%', height: '48%' },
+    pin: { left: '16%', top: '56%' },
+  },
+  {
+    id: 'mannequin',
+    label: 'Fitting Form',
+    sub: 'Interactive Ensemble',
+    box: { left: '42%', top: '26%', width: '13%', height: '62%' },
+    pin: { left: '49%', top: '38%' },
+  },
+  {
+    id: 'armoire',
+    label: 'Wardrobe Armoire',
+    sub: 'Apparel & Wares',
+    box: { left: '62%', top: '15%', width: '36%', height: '78%' },
+    pin: { left: '78%', top: '32%' },
+  },
+];
+
 export default function WardrobeSanctum() {
+  const [activeModal, setActiveModal] = useState(null); // 'chest' | 'mannequin' | 'armoire' | null
+  const [hoveredZone, setHoveredZone] = useState(null);
+
   const [selectedTop, setSelectedTop] = useState(WARDROBE_TOPS[0]);
   const [selectedBottom, setSelectedBottom] = useState(WARDROBE_BOTTOMS[0]);
 
+  // Crow Chest States
   const [chestOpen, setChestOpen] = useState(false);
   const [keyInput, setKeyInput] = useState('');
   const [chestMessage, setChestMessage] = useState('');
-  const [showKeyModal, setShowKeyModal] = useState(false);
 
   const handleUnlockChest = (e) => {
     e.preventDefault();
     if (keyInput.trim().toLowerCase() === 'patron') {
       setChestOpen(true);
-      setShowKeyModal(false);
-      setChestMessage('The lock clicks. The corvids yield the vault.');
+      setChestMessage('The brass lock clicks open. The corvids yield the vault.');
     } else {
-      setChestMessage('The key does not turn. Corvids stir overhead.');
+      setChestMessage('The skeleton key does not turn. Corvids stir overhead.');
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#070608] text-stone-200 font-sans p-4 sm:p-8 flex flex-col justify-between selection:bg-purple-950">
+    <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-stone-200 font-sans flex items-center justify-center">
       
-      {/* Top Header */}
-      <header className="max-w-7xl mx-auto w-full flex items-center justify-between border-b border-stone-850 pb-5">
+      {/* Top Floating Atelier Bar */}
+      <header className="absolute top-3 left-0 right-0 z-40 flex items-center justify-between px-6 pointer-events-auto">
         <Link
           href="/"
-          className="flex items-center gap-2 rounded-full border border-stone-700 bg-stone-900/90 px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white hover:border-purple-400 hover:bg-stone-800 transition"
+          className="flex items-center gap-2 rounded-full border border-stone-700 bg-stone-950/80 backdrop-blur-md px-4 py-2 text-xs font-semibold text-stone-300 hover:text-white hover:border-purple-400 transition shadow-lg"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Return to Atelier Den</span>
+          <span>Return to Den</span>
         </Link>
 
-        <div className="text-center">
-          <h1 className="font-serif text-xl sm:text-2xl font-bold tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-amber-200 to-amber-300 uppercase">
+        <div className="flex flex-col items-center justify-center text-center">
+          <h1 className="font-serif italic text-lg sm:text-2xl font-semibold tracking-wide bg-gradient-to-r from-violet-200 via-pink-200 to-amber-200 bg-clip-text text-transparent drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]">
             The Dressing Room
           </h1>
-          <p className="text-[10px] font-mono tracking-[0.3em] text-stone-500 uppercase mt-0.5">
+          <p className="text-[9px] font-mono tracking-[0.3em] text-amber-200/80 uppercase drop-shadow">
             Atelier Wardrobe & Private Vault
           </p>
         </div>
 
         <button
-          onClick={() => setShowKeyModal(true)}
-          className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-950/40 px-4 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-950/80 transition"
+          onClick={() => setActiveModal('chest')}
+          className="flex items-center gap-2 rounded-full border border-amber-500/40 bg-stone-950/80 backdrop-blur-md px-4 py-2 text-xs font-semibold text-amber-300 hover:border-amber-400 transition shadow-lg"
         >
           <Key className="h-3.5 w-3.5 text-amber-400" />
-          <span>{chestOpen ? 'Vault Unlocked' : 'Use Patron Key'}</span>
+          <span>{chestOpen ? 'Vault Open' : 'Patron Key'}</span>
         </button>
       </header>
 
-      {/* Main Room Body */}
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8 my-8 items-start">
-        
-        {/* Left Column: Gothic Window & Corvid Chest */}
-        <div className="lg:col-span-4 w-full space-y-6">
-          
-          {/* Gothic Arched Window */}
-          <div className="relative rounded-t-full border-4 border-stone-800 bg-[#0a0810] h-72 sm:h-80 shadow-[inset_0_10px_35px_rgba(0,0,0,0.9),0_10px_30px_rgba(0,0,0,0.7)] overflow-hidden flex flex-col justify-end p-4">
-            {/* Window Glass Grid Tracery */}
-            <div className="absolute inset-0 pointer-events-none flex justify-center">
-              <div className="w-[2px] h-full bg-stone-800/90 shadow-[0_0_10px_rgba(0,0,0,0.9)]" />
-              <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-stone-800/90" />
-              <div className="absolute top-1/4 left-1/4 right-1/4 h-24 border border-stone-850 rounded-t-full" />
-            </div>
+      {/* Main Room Viewport */}
+      <div className="relative w-full max-w-[1920px] aspect-[16/9] max-h-screen overflow-hidden flex items-center justify-center">
+        <img
+          src="/dressing-room.jpg"
+          alt="The Dressing Room Atelier"
+          className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+        />
 
-            {/* Ambient Mist & Twilight Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-purple-900/20 via-amber-700/10 to-transparent pointer-events-none" />
+        {/* Interactive Hotspot Pins */}
+        <div className="absolute inset-0 z-20 pointer-events-none">
+          {ZONES.map((zone) => {
+            const isHovered = hoveredZone === zone.id;
+            return (
+              <div
+                key={zone.id}
+                onMouseEnter={() => setHoveredZone(zone.id)}
+                onMouseLeave={() => setHoveredZone(null)}
+                onClick={() => {
+                  setHoveredZone(null);
+                  setActiveModal(zone.id);
+                }}
+                style={{
+                  left: zone.box.left,
+                  top: zone.box.top,
+                  width: zone.box.width,
+                  height: zone.box.height,
+                }}
+                className="absolute cursor-pointer pointer-events-auto"
+              >
+                <div
+                  style={{
+                    left: `calc(${zone.pin.left} - ${zone.box.left})`,
+                    top: `calc(${zone.pin.top} - ${zone.box.top})`,
+                  }}
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-all duration-300 ${
+                    isHovered ? 'opacity-100 scale-100 pointer-events-auto' : 'opacity-0 scale-75'
+                  }`}
+                >
+                  <span className="absolute -inset-2 rounded-full bg-purple-500/40 animate-ping" />
 
-            <div className="relative z-10 text-center space-y-0.5 pb-2">
-              <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-stone-400">
-                Outer Woods • Twilight Rain
-              </span>
-              <p className="text-[11px] font-serif italic text-stone-500">
-                Mist gathers against the atelier glass
-              </p>
-            </div>
-          </div>
+                  <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-stone-950/90 border border-purple-400 shadow-[0_0_20px_rgba(168,85,247,0.9)] backdrop-blur-md">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="w-4 h-4 fill-purple-300 drop-shadow-[0_0_6px_#c084fc] animate-pulse"
+                    >
+                      <path d="M12 4c-.6 0-1 .4-1 1v14c0 .6.4 1 1 1s1-.4 1-1V5c0-.6-.4-1-1-1zm-1.5 2.5C7.5 3 2 4.5 2 9.5c0 4 4.5 6.5 8.5 7.5V6.5zm3 0v10.5c4-1 8.5-3.5 8.5-7.5 0-5-5.5-6.5-8.5-3z" />
+                    </svg>
+                  </div>
 
-          {/* Corvid Antique Chest */}
-          <div className="rounded-2xl border border-stone-800 bg-gradient-to-b from-stone-900/95 to-zinc-950 p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">🦅</span>
-                <div>
-                  <h3 className="font-serif text-sm font-bold tracking-wide text-amber-200">
-                    Corvid Antique Chest
-                  </h3>
-                  <p className="text-[10px] font-mono text-stone-500 uppercase tracking-wider">
-                    One-of-a-Kind Patron Vault
-                  </p>
+                  <div className="absolute left-1/2 bottom-full -translate-x-1/2 mb-2 flex flex-col items-center">
+                    <div className="bg-stone-950/95 border border-purple-400/70 px-3 py-1.5 rounded-lg shadow-[0_8px_25px_rgba(0,0,0,0.9)] whitespace-nowrap text-center">
+                      <p className="text-xs font-serif font-bold text-purple-200 tracking-wider">
+                        {zone.label}
+                      </p>
+                      <p className="text-[9px] font-mono text-stone-400 uppercase tracking-widest">
+                        {zone.sub}
+                      </p>
+                    </div>
+                    <div className="w-2 h-2 bg-stone-950 border-r border-b border-purple-400/70 rotate-45 -mt-1" />
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      </div>
 
-              {chestOpen ? (
-                <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-mono">
-                  <Unlock className="h-3.5 w-3.5" /> Opened
-                </span>
-              ) : (
-                <span className="flex items-center gap-1 text-[11px] text-amber-400 font-mono">
-                  <Lock className="h-3.5 w-3.5" /> Sealed
-                </span>
-              )}
+      {/* MODAL 1: THE CROW CHEST & PATRON VAULT */}
+      {activeModal === 'chest' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border-2 border-amber-600/50 bg-stone-950/95 p-6 shadow-[0_0_50px_rgba(217,119,6,0.3)] space-y-4">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 border-b border-stone-800 pb-3">
+              <span className="text-3xl">🦅</span>
+              <div>
+                <h3 className="font-serif text-lg font-bold text-amber-200">
+                  Corvid Antique Chest
+                </h3>
+                <p className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                  Archival Limited Edition Vault
+                </p>
+              </div>
             </div>
 
             {!chestOpen ? (
-              <div className="text-center py-4 space-y-3">
-                <p className="text-xs text-stone-400 leading-relaxed">
-                  Crows perch upon the heavy brass strapping. This locked vault holds 1-of-1 archive originals and limited atelier drops.
+              <form onSubmit={handleUnlockChest} className="space-y-4 pt-2">
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Two black crows guard the weathered brass strapping. Enter your patron key or token to turn the heavy tumbler (try test key: <code className="text-amber-300 font-mono">patron</code>).
                 </p>
+
+                <input
+                  type="password"
+                  placeholder="Enter patron key..."
+                  value={keyInput}
+                  onChange={(e) => setKeyInput(e.target.value)}
+                  autoFocus
+                  className="w-full text-center rounded-lg bg-stone-900 border border-stone-700 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-amber-400 font-mono tracking-widest shadow-inner"
+                />
+
+                {chestMessage && (
+                  <p className="text-xs font-mono text-amber-400 text-center">{chestMessage}</p>
+                )}
+
                 <button
-                  onClick={() => setShowKeyModal(true)}
-                  className="w-full py-2.5 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-xs font-serif font-bold text-amber-300 transition"
+                  type="submit"
+                  className="w-full py-2.5 rounded-lg bg-amber-600 hover:bg-amber-500 font-serif font-bold text-xs text-black uppercase tracking-wider transition shadow-md"
                 >
-                  Turn Patron Skeleton Key
+                  Turn Skeleton Key
                 </button>
-              </div>
+              </form>
             ) : (
-              <div className="space-y-3 pt-1">
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between text-xs text-emerald-400 font-mono pb-1 border-b border-stone-850">
+                  <span className="flex items-center gap-1.5"><Unlock className="w-3.5 h-3.5" /> Vault Unlocked</span>
+                  <span>2 Limited Relics Found</span>
+                </div>
+
                 {VAULT_ITEMS.map((item) => (
                   <div
                     key={item.id}
@@ -204,193 +285,160 @@ export default function WardrobeSanctum() {
             )}
           </div>
         </div>
+      )}
 
-        {/* Center Column: Interactive Mannequin / Fitting Form */}
-        <div className="lg:col-span-4 w-full flex flex-col items-center justify-between p-6 rounded-3xl border border-stone-800 bg-stone-900/40 shadow-2xl relative min-h-[520px]">
-          <div className="w-full flex items-center justify-between text-[10px] font-mono text-stone-500 uppercase tracking-widest border-b border-stone-850 pb-3">
-            <span className="flex items-center gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-              <span>Fitting Room Form</span>
-            </span>
-            <span className="text-stone-400">Live Ensemble</span>
-          </div>
-
-          {/* Mannequin Graphic Form */}
-          <div className="relative w-full max-w-[280px] h-[360px] flex flex-col items-center justify-center my-4">
-            <div className="w-8 h-8 rounded-full border-2 border-amber-600/50 bg-stone-950 mb-1" />
-            <div className="w-2.5 h-6 bg-stone-800 rounded-t" />
-
-            {/* Selected Top Layer */}
-            <div className="relative w-48 h-36 rounded-t-3xl rounded-b-xl border border-purple-500/50 bg-gradient-to-b from-stone-850 to-stone-950 p-4 shadow-xl flex flex-col justify-between text-center overflow-hidden">
-              <div className="text-xs font-mono text-amber-300/90 font-medium truncate">
-                {selectedTop.name}
-              </div>
-              <div className="text-[10px] text-stone-400 italic">
-                {selectedTop.color}
-              </div>
-              <div className="text-sm font-serif font-bold text-purple-300">
-                {selectedTop.price}
-              </div>
-            </div>
-
-            {/* Selected Bottom Layer */}
-            <div className="relative w-40 h-40 -mt-2 rounded-b-2xl border border-stone-700 bg-gradient-to-b from-stone-900 to-stone-950 p-4 shadow-lg flex flex-col justify-between text-center">
-              <div className="text-xs font-mono text-stone-300 font-medium truncate">
-                {selectedBottom.name}
-              </div>
-              <div className="text-[10px] text-stone-400 italic">
-                {selectedBottom.color}
-              </div>
-              <div className="text-sm font-serif font-bold text-stone-200">
-                {selectedBottom.price}
-              </div>
-            </div>
-
-            {/* Base Stand */}
-            <div className="w-2.5 h-12 bg-stone-800" />
-            <div className="w-24 h-2 bg-stone-700 rounded-full" />
-          </div>
-
-          <div className="w-full border-t border-stone-800 pt-3 flex items-center justify-between text-xs">
-            <span className="text-stone-400">Total Ensemble:</span>
-            <span className="font-serif font-bold text-amber-300 text-base">
-              ${(parseInt(selectedTop.price.replace('$', '')) + parseInt(selectedBottom.price.replace('$', '')))}
-            </span>
-          </div>
-        </div>
-
-        {/* Right Column: Garment Racks */}
-        <div className="lg:col-span-4 w-full space-y-6">
-          
-          {/* Tops Rack */}
-          <div className="rounded-2xl border border-stone-800 bg-stone-900/60 p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-2">
-              <h3 className="font-serif text-sm font-bold text-stone-200">
-                Tops & Outerwear
-              </h3>
-              <span className="text-[10px] font-mono text-stone-500 uppercase">{WARDROBE_TOPS.length} items</span>
-            </div>
-
-            <div className="space-y-2.5">
-              {WARDROBE_TOPS.map((top) => {
-                const active = selectedTop.id === top.id;
-                return (
-                  <button
-                    key={top.id}
-                    onClick={() => setSelectedTop(top)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition flex items-center justify-between ${
-                      active
-                        ? 'border-purple-500 bg-purple-950/30 text-white shadow-[0_0_15px_rgba(168,85,247,0.2)]'
-                        : 'border-stone-850 bg-stone-950/60 text-stone-400 hover:border-stone-700'
-                    }`}
-                  >
-                    <div className="pr-2">
-                      <p className="font-serif font-bold text-xs text-stone-200">{top.name}</p>
-                      <p className="text-[10px] text-stone-500 mt-0.5 leading-snug">{top.detail}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-serif font-bold text-amber-300">{top.price}</span>
-                      {active && <Check className="h-3.5 w-3.5 text-purple-400 ml-auto mt-1" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Bottoms Rack */}
-          <div className="rounded-2xl border border-stone-800 bg-stone-900/60 p-5 space-y-3">
-            <div className="flex items-center justify-between border-b border-stone-800 pb-2">
-              <h3 className="font-serif text-sm font-bold text-stone-200">
-                Bottoms & Skirts
-              </h3>
-              <span className="text-[10px] font-mono text-stone-500 uppercase">{WARDROBE_BOTTOMS.length} items</span>
-            </div>
-
-            <div className="space-y-2.5">
-              {WARDROBE_BOTTOMS.map((bot) => {
-                const active = selectedBottom.id === bot.id;
-                return (
-                  <button
-                    key={bot.id}
-                    onClick={() => setSelectedBottom(bot)}
-                    className={`w-full text-left p-3.5 rounded-xl border transition flex items-center justify-between ${
-                      active
-                        ? 'border-amber-500 bg-amber-950/20 text-white shadow-[0_0_15px_rgba(217,119,6,0.2)]'
-                        : 'border-stone-850 bg-stone-950/60 text-stone-400 hover:border-stone-700'
-                    }`}
-                  >
-                    <div className="pr-2">
-                      <p className="font-serif font-bold text-xs text-stone-200">{bot.name}</p>
-                      <p className="text-[10px] text-stone-500 mt-0.5 leading-snug">{bot.detail}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-serif font-bold text-amber-300">{bot.price}</span>
-                      {active && <Check className="h-3.5 w-3.5 text-amber-400 ml-auto mt-1" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* Patron Key Unlock Modal */}
-      {showKeyModal && (
+      {/* MODAL 2: FITTING FORM & LIVE STYLING MANNEQUIN */}
+      {activeModal === 'mannequin' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-amber-600/50 bg-stone-950 p-6 shadow-2xl space-y-4 text-center">
-            <div className="mx-auto w-10 h-10 rounded-full bg-amber-950/80 border border-amber-500/50 flex items-center justify-center text-amber-300">
-              <Key className="w-5 h-5" />
-            </div>
+          <div className="relative w-full max-w-2xl rounded-3xl border border-stone-800 bg-stone-950/95 p-6 shadow-2xl flex flex-col md:flex-row gap-6">
+            <button
+              onClick={() => setActiveModal(null)}
+              className="absolute top-4 right-4 text-stone-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-            <div className="space-y-1">
-              <h3 className="font-serif text-lg font-bold text-amber-100">Patron Skeleton Key</h3>
-              <p className="text-xs text-stone-400">
-                Enter your subscription token to unlock the Corvid Chest (test key: <code className="text-amber-300 font-mono">patron</code>).
-              </p>
-            </div>
-
-            <form onSubmit={handleUnlockChest} className="space-y-3">
-              <input
-                type="password"
-                placeholder="Enter key..."
-                value={keyInput}
-                onChange={(e) => setKeyInput(e.target.value)}
-                autoFocus
-                className="w-full text-center rounded-lg bg-stone-900 border border-stone-700 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400 font-mono tracking-widest"
-              />
-
-              {chestMessage && (
-                <p className="text-[11px] font-mono text-amber-400">{chestMessage}</p>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowKeyModal(false)}
-                  className="w-1/2 py-2 rounded-lg border border-stone-700 bg-stone-900 text-xs text-stone-300 hover:bg-stone-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="w-1/2 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-xs font-bold text-black transition"
-                >
-                  Turn Key
-                </button>
+            {/* Mannequin Preview */}
+            <div className="w-full md:w-1/2 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-stone-800 pb-4 md:pb-0 md:pr-6">
+              <div className="text-center space-y-0.5">
+                <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                  Atelier Ensemble
+                </span>
+                <h3 className="font-serif text-base font-bold text-amber-100">
+                  Current Fitting
+                </h3>
               </div>
-            </form>
+
+              <div className="relative w-48 h-64 flex flex-col items-center justify-center my-4">
+                <div className="w-7 h-7 rounded-full border border-amber-600/50 bg-stone-900 mb-1 shadow" />
+                <div className="w-2 h-4 bg-stone-700" />
+
+                {/* Top */}
+                <div className="relative w-36 h-28 rounded-t-2xl rounded-b-lg border border-purple-500/50 bg-stone-900 p-2 text-center flex flex-col justify-between shadow-lg">
+                  <span className="text-[10px] font-mono text-amber-200 truncate">{selectedTop.name}</span>
+                  <span className="text-xs font-serif font-bold text-purple-300">{selectedTop.price}</span>
+                </div>
+
+                {/* Bottom */}
+                <div className="relative w-28 h-32 -mt-1 rounded-b-xl border border-stone-700 bg-stone-950 p-2 text-center flex flex-col justify-between shadow-md">
+                  <span className="text-[10px] font-mono text-stone-300 truncate">{selectedBottom.name}</span>
+                  <span className="text-xs font-serif font-bold text-stone-200">{selectedBottom.price}</span>
+                </div>
+
+                <div className="w-2 h-8 bg-stone-700" />
+                <div className="w-16 h-1.5 bg-stone-600 rounded-full" />
+              </div>
+
+              <div className="w-full pt-2 flex items-center justify-between text-xs border-t border-stone-850">
+                <span className="text-stone-400">Total:</span>
+                <span className="font-serif font-bold text-amber-300 text-sm">
+                  ${parseInt(selectedTop.price.replace('$', '')) + parseInt(selectedBottom.price.replace('$', ''))}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Switcher Controls */}
+            <div className="w-full md:w-1/2 space-y-4">
+              <div>
+                <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Top</span>
+                <div className="space-y-1.5 mt-1.5">
+                  {WARDROBE_TOPS.map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => setSelectedTop(t)}
+                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+                        selectedTop.id === t.id
+                          ? 'border-purple-400 bg-purple-950/40 text-white'
+                          : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
+                      }`}
+                    >
+                      <span className="font-medium truncate">{t.name}</span>
+                      <span className="font-bold text-amber-300 pl-2">{t.price}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Bottom</span>
+                <div className="space-y-1.5 mt-1.5">
+                  {WARDROBE_BOTTOMS.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => setSelectedBottom(b)}
+                      className={`w-full text-left p-2.5 rounded-lg border text-xs flex items-center justify-between transition ${
+                        selectedBottom.id === b.id
+                          ? 'border-amber-400 bg-amber-950/30 text-white'
+                          : 'border-stone-850 bg-stone-900/50 text-stone-400 hover:border-stone-700'
+                      }`}
+                    >
+                      <span className="font-medium truncate">{b.name}</span>
+                      <span className="font-bold text-amber-300 pl-2">{b.price}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="text-center py-4 border-t border-stone-850 text-[10px] font-mono text-stone-500 tracking-widest uppercase">
-        Minds Eye Butterfly • Archival Wardrobe & Limited Editions
-      </footer>
+      {/* MODAL 3: WARDROBE ARMOIRE CATALOG */}
+      {activeModal === 'armoire' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl rounded-3xl border border-stone-800 bg-stone-950/95 p-6 shadow-2xl max-h-[85vh] flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-amber-100">
+                  The Atelier Armoire
+                </h3>
+                <p className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
+                  Fine Apparel & Hand-Crafted Goods
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="text-stone-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4 overflow-y-auto pr-1">
+              {[...WARDROBE_TOPS, ...WARDROBE_BOTTOMS].map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 rounded-xl border border-stone-850 bg-stone-900/60 flex flex-col justify-between space-y-2 hover:border-purple-400/50 transition"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-serif font-bold text-sm text-stone-100">{item.name}</h4>
+                      <span className="font-serif font-bold text-sm text-amber-300">{item.price}</span>
+                    </div>
+                    <span className="text-[10px] font-mono text-stone-400 italic block">{item.color}</span>
+                    <p className="text-[11px] text-stone-400 leading-snug">{item.detail}</p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (item.id.startsWith('top')) setSelectedTop(item);
+                      else setSelectedBottom(item);
+                      setActiveModal('mannequin');
+                    }}
+                    className="w-full mt-2 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-xs font-serif text-purple-200 hover:bg-purple-900/50 transition"
+                  >
+                    Try on Fitting Form →
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-stone-850 pt-3 text-center text-[10px] font-mono text-stone-500 uppercase tracking-widest">
+              Direct Inquiries & Pre-Orders Open Through Studio Mobile
+            </div>
+          </div>
+        </div>
+      )}
 
     </main>
   );
