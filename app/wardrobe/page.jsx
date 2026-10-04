@@ -159,7 +159,7 @@ export default function WardrobeSanctum() {
     loadWardrobe();
   }, []);
 
-  // Window Rain & Flying Crow Engine
+  // Window Rain, Rare Flying Crows & Lucky the Cat Living Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -168,11 +168,11 @@ export default function WardrobeSanctum() {
     let animationId;
     let time = 0;
 
-    // Arched Window geometry (1920x1080 coordinates)
+    // Window boundaries for rain and crows
     const WIN_LEFT = 370;
     const WIN_RIGHT = 970;
     const WIN_TOP = 10;
-    const WIN_SILL = 520; // Stops above table, candles, and floor
+    const WIN_SILL = 520;
 
     const raindrops = Array.from({ length: 90 }, () => ({
       x: WIN_LEFT + Math.random() * (WIN_RIGHT - WIN_LEFT),
@@ -187,6 +187,207 @@ export default function WardrobeSanctum() {
     let crowActive = false;
     let crow = { x: WIN_RIGHT + 50, y: 160, scale: 0.5, speedX: -1.4, speedY: 0.1, wingCycle: 0 };
     let nextCrowTime = 180;
+
+    // --- Lucky the Cat State Machine ---
+    // Floor boundary coordinates (carpet and floorboards)
+    const FLOOR_MIN_X = 640;
+    const FLOOR_MAX_X = 1350;
+    const FLOOR_MIN_Y = 820;
+    const FLOOR_MAX_Y = 980;
+
+    const lucky = {
+      x: 950,
+      y: 910,
+      targetX: 950,
+      targetY: 910,
+      facing: 1, // 1 = right, -1 = left
+      state: 'sleeping', // 'walking' | 'idle' | 'sleeping'
+      stateTimer: 350,
+      walkCycle: 0,
+      breathCycle: 0,
+      tailWag: 0,
+      scale: 0.85,
+    };
+
+    const chooseNewLuckyTarget = () => {
+      lucky.targetX = FLOOR_MIN_X + Math.random() * (FLOOR_MAX_X - FLOOR_MIN_X);
+      lucky.targetY = FLOOR_MIN_Y + Math.random() * (FLOOR_MAX_Y - FLOOR_MIN_Y);
+      lucky.facing = lucky.targetX > lucky.x ? 1 : -1;
+      lucky.state = 'walking';
+      lucky.stateTimer = 500;
+    };
+
+    const drawLucky = () => {
+      ctx.save();
+      ctx.translate(lucky.x, lucky.y);
+      ctx.scale(lucky.scale * lucky.facing, lucky.scale);
+
+      // Warm candlelit ambient drop shadow beneath Lucky
+      ctx.save();
+      const shadowGrad = ctx.createRadialGradient(0, 16, 2, 0, 16, 32);
+      shadowGrad.addColorStop(0, 'rgba(10, 6, 12, 0.7)');
+      shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, 16, 30, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      const breath = Math.sin(lucky.breathCycle) * 1.5;
+      const tailSway = Math.sin(lucky.tailWag) * 0.4;
+
+      if (lucky.state === 'sleeping') {
+        // --- SLEEPING / LOAFING POSE ---
+        // Sleeping body (sleek black silhouette with subtle warm highlight)
+        ctx.fillStyle = '#16131b';
+        ctx.beginPath();
+        ctx.ellipse(0, 6 - breath * 0.5, 24 + breath * 0.4, 15 + breath * 0.6, -0.1, 0, Math.PI * 2);
+        ctx.fill();
+
+        // White chest patch
+        ctx.fillStyle = 'rgba(235, 230, 240, 0.85)';
+        ctx.beginPath();
+        ctx.ellipse(-6, 8, 7, 5, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head curled close to body
+        ctx.fillStyle = '#1a1620';
+        ctx.beginPath();
+        ctx.arc(-18, 4, 10, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears
+        ctx.beginPath();
+        ctx.moveTo(-23, -2);
+        ctx.lineTo(-26, -9);
+        ctx.lineTo(-19, -4);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-16, -3);
+        ctx.lineTo(-13, -10);
+        ctx.lineTo(-11, -3);
+        ctx.fill();
+
+        // Sleeping closed eye slit
+        ctx.strokeStyle = 'rgba(255, 215, 120, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(-20, 4, 3, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.stroke();
+
+        // Red collar accent
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(-16, 7, 7, -0.2, 0.8);
+        ctx.stroke();
+
+        // Curled Tail with gentle tip flick
+        ctx.strokeStyle = '#16131b';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(18, 8);
+        ctx.quadraticCurveTo(28, 12, 26, 2 + tailSway * 3);
+        ctx.stroke();
+
+      } else {
+        // --- WALKING / STANDING POSE ---
+        const walk = lucky.state === 'walking' ? Math.sin(lucky.walkCycle) : 0;
+        const walkOpp = lucky.state === 'walking' ? Math.cos(lucky.walkCycle) : 0;
+
+        // Legs (back pair)
+        ctx.strokeStyle = '#120f17';
+        ctx.lineWidth = 4.5;
+        ctx.lineCap = 'round';
+
+        // Rear left leg
+        ctx.beginPath();
+        ctx.moveTo(14, 6);
+        ctx.lineTo(16 + walk * 6, 20);
+        ctx.stroke();
+
+        // Front left leg
+        ctx.beginPath();
+        ctx.moveTo(-12, 6);
+        ctx.lineTo(-10 - walk * 6, 20);
+        ctx.stroke();
+
+        // Torso / Body
+        ctx.fillStyle = '#18141f';
+        ctx.beginPath();
+        ctx.ellipse(0, 4, 22, 12, 0.05, 0, Math.PI * 2);
+        ctx.fill();
+
+        // White chest patch
+        ctx.fillStyle = 'rgba(240, 235, 245, 0.9)';
+        ctx.beginPath();
+        ctx.ellipse(-12, 6, 6, 7, 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Legs (front pair)
+        ctx.strokeStyle = '#1d1925';
+
+        // Rear right leg
+        ctx.beginPath();
+        ctx.moveTo(10, 6);
+        ctx.lineTo(8 - walk * 6, 21);
+        ctx.stroke();
+
+        // Front right leg
+        ctx.beginPath();
+        ctx.moveTo(-16, 6);
+        ctx.lineTo(-18 + walk * 6, 21);
+        ctx.stroke();
+
+        // Head
+        ctx.fillStyle = '#1c1824';
+        ctx.beginPath();
+        ctx.arc(-22, -2, 9, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ears
+        ctx.beginPath();
+        ctx.moveTo(-27, -7);
+        ctx.lineTo(-29, -15);
+        ctx.lineTo(-23, -9);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(-19, -8);
+        ctx.lineTo(-16, -16);
+        ctx.lineTo(-14, -8);
+        ctx.fill();
+
+        // Red collar
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.arc(-20, 2, 6, -0.4, 0.9);
+        ctx.stroke();
+
+        // Golden luminous eyes
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(-24, -2, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(-24, -2, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Swishing high tail
+        ctx.strokeStyle = '#18141f';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(18, 4);
+        ctx.quadraticCurveTo(28 + tailSway * 4, -4, 26 + tailSway * 6, -16);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    };
 
     const drawCrow = (x, y, scale, wingPhase) => {
       ctx.save();
@@ -218,7 +419,7 @@ export default function WardrobeSanctum() {
       ctx.clearRect(0, 0, 1920, 1080);
       time += 0.02;
 
-      // True Gothic Arch Clip: curves across the top and terminates at sill
+      // 1. GOTHIC ARCH WINDOW LAYER (RAIN + CROWS)
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(WIN_LEFT, WIN_SILL);
@@ -229,7 +430,6 @@ export default function WardrobeSanctum() {
       ctx.closePath();
       ctx.clip();
 
-      // Rare Crow Flight
       if (!crowActive) {
         nextCrowTime -= 1;
         if (nextCrowTime <= 0) {
@@ -248,11 +448,10 @@ export default function WardrobeSanctum() {
 
         if (crow.x < WIN_LEFT - 40) {
           crowActive = false;
-          nextCrowTime = 900 + Math.random() * 700; // 15-30 second delay
+          nextCrowTime = 900 + Math.random() * 700;
         }
       }
 
-      // Rain Streaks
       ctx.strokeStyle = 'rgba(210, 225, 255, 0.4)';
       raindrops.forEach((drop) => {
         drop.y += drop.speedY;
@@ -270,8 +469,49 @@ export default function WardrobeSanctum() {
         ctx.lineTo(drop.x + drop.speedX * 2, drop.y + drop.len);
         ctx.stroke();
       });
-
       ctx.restore();
+
+      // 2. LUCKY THE CAT SIMULATION ENGINE
+      lucky.breathCycle += 0.035;
+      lucky.tailWag += 0.05;
+
+      lucky.stateTimer -= 1;
+      if (lucky.stateTimer <= 0) {
+        if (lucky.state === 'walking' || lucky.state === 'idle') {
+          // 65% chance to sleep/loaf, 35% to idle
+          if (Math.random() < 0.65) {
+            lucky.state = 'sleeping';
+            lucky.stateTimer = 600 + Math.random() * 800; // Sleep for 15-30 seconds
+          } else {
+            lucky.state = 'idle';
+            lucky.stateTimer = 180 + Math.random() * 240;
+          }
+        } else if (lucky.state === 'sleeping') {
+          // Wake up and pick a new spot
+          chooseNewLuckyTarget();
+        }
+      }
+
+      if (lucky.state === 'walking') {
+        const dx = lucky.targetX - lucky.x;
+        const dy = lucky.targetY - lucky.y;
+        const dist = Math.hypot(dx, dy);
+
+        if (dist > 3) {
+          const speed = 0.85;
+          lucky.x += (dx / dist) * speed;
+          lucky.y += (dy / dist) * speed;
+          lucky.walkCycle += 0.12;
+          lucky.facing = dx >= 0 ? 1 : -1;
+        } else {
+          // Reached destination, pause and settle
+          lucky.state = 'idle';
+          lucky.stateTimer = 120 + Math.random() * 180;
+        }
+      }
+
+      drawLucky();
+
       animationId = requestAnimationFrame(render);
     };
 
@@ -329,7 +569,7 @@ export default function WardrobeSanctum() {
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
         />
 
-        {/* Rain strictly clipped to gothic window */}
+        {/* Live Rain, Crows & Lucky the Cat Canvas */}
         <canvas
           ref={canvasRef}
           width={1920}
@@ -490,7 +730,6 @@ export default function WardrobeSanctum() {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Mannequin Preview */}
             <div className="w-full md:w-1/2 flex flex-col items-center justify-between border-b md:border-b-0 md:border-r border-stone-800 pb-4 md:pb-0 md:pr-6">
               <div className="text-center space-y-0.5">
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">
@@ -502,7 +741,6 @@ export default function WardrobeSanctum() {
               </div>
 
               <div className="relative w-52 h-64 flex flex-col items-center justify-center my-4">
-                {/* Top Garment Preview */}
                 <div className="relative w-44 h-32 rounded-t-2xl rounded-b-lg border border-purple-500/50 bg-stone-900/90 p-2 text-center flex flex-col justify-between shadow-xl overflow-hidden">
                   {selectedTop?.image ? (
                     <img src={selectedTop.image} alt={selectedTop.name} className="h-16 w-full object-contain mx-auto" />
@@ -515,7 +753,6 @@ export default function WardrobeSanctum() {
                   </div>
                 </div>
 
-                {/* Bottom Garment Preview */}
                 <div className="relative w-36 h-28 -mt-1 rounded-b-xl border border-stone-700 bg-stone-950 p-2 text-center flex flex-col justify-between shadow-md overflow-hidden">
                   {selectedBottom?.image ? (
                     <img src={selectedBottom.image} alt={selectedBottom.name} className="h-14 w-full object-contain mx-auto" />
@@ -540,7 +777,6 @@ export default function WardrobeSanctum() {
               </div>
             </div>
 
-            {/* Quick Switcher Controls */}
             <div className="w-full md:w-1/2 space-y-4 max-h-[65vh] overflow-y-auto pr-1">
               <div>
                 <span className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">Select Top</span>
