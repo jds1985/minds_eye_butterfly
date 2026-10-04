@@ -159,16 +159,14 @@ export default function WardrobeSanctum() {
     loadWardrobe();
   }, []);
 
-  // Window Rain, Rare Flying Crows & Lucky the Cat Living Engine
+  // Gothic Window Rain & Crow Flight Engine
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     let animationId;
-    let time = 0;
 
-    // Window boundaries for rain and crows
     const WIN_LEFT = 370;
     const WIN_RIGHT = 970;
     const WIN_TOP = 10;
@@ -188,8 +186,87 @@ export default function WardrobeSanctum() {
     let crow = { x: WIN_RIGHT + 50, y: 160, scale: 0.5, speedX: -1.4, speedY: 0.1, wingCycle: 0 };
     let nextCrowTime = 180;
 
-    
+    const drawCrow = (x, y, scale, wingPhase) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = 'rgba(12, 10, 16, 0.8)';
+      const wingFlap = Math.sin(wingPhase) * 7;
 
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 6, 2.5, -0.1, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-1, -1);
+      ctx.quadraticCurveTo(-5, -8 + wingFlap, -12, -4 + wingFlap);
+      ctx.quadraticCurveTo(-6, -1, 0, 0);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(1, -1);
+      ctx.quadraticCurveTo(5, -8 + wingFlap, 12, -4 + wingFlap);
+      ctx.quadraticCurveTo(6, -1, 0, 0);
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    const render = () => {
+      ctx.clearRect(0, 0, 1920, 1080);
+
+      // Gothic Arch Clip Mask
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(WIN_LEFT, WIN_SILL);
+      ctx.lineTo(WIN_LEFT, WIN_TOP + 230);
+      ctx.quadraticCurveTo(WIN_LEFT + 80, WIN_TOP + 10, (WIN_LEFT + WIN_RIGHT) / 2, WIN_TOP);
+      ctx.quadraticCurveTo(WIN_RIGHT - 80, WIN_TOP + 10, WIN_RIGHT, WIN_TOP + 230);
+      ctx.lineTo(WIN_RIGHT, WIN_SILL);
+      ctx.closePath();
+      ctx.clip();
+
+      if (!crowActive) {
+        nextCrowTime -= 1;
+        if (nextCrowTime <= 0) {
+          crowActive = true;
+          crow.x = WIN_RIGHT + 30;
+          crow.y = WIN_TOP + 100 + Math.random() * 140;
+          crow.scale = 0.4 + Math.random() * 0.25;
+          crow.speedX = -(1.2 + Math.random() * 0.6);
+          crow.wingCycle = 0;
+        }
+      } else {
+        crow.x += crow.speedX;
+        crow.y += crow.speedY;
+        crow.wingCycle += 0.14;
+        drawCrow(crow.x, crow.y, crow.scale, crow.wingCycle);
+
+        if (crow.x < WIN_LEFT - 40) {
+          crowActive = false;
+          nextCrowTime = 900 + Math.random() * 700;
+        }
+      }
+
+      ctx.strokeStyle = 'rgba(210, 225, 255, 0.4)';
+      raindrops.forEach((drop) => {
+        drop.y += drop.speedY;
+        drop.x += drop.speedX;
+
+        if (drop.y > WIN_SILL) {
+          drop.y = WIN_TOP - 10;
+          drop.x = WIN_LEFT + Math.random() * (WIN_RIGHT - WIN_LEFT);
+        }
+
+        ctx.globalAlpha = drop.opacity;
+        ctx.lineWidth = drop.width;
+        ctx.beginPath();
+        ctx.moveTo(drop.x, drop.y);
+        ctx.lineTo(drop.x + drop.speedX * 2, drop.y + drop.len);
+        ctx.stroke();
+      });
+
+      ctx.restore();
       animationId = requestAnimationFrame(render);
     };
 
@@ -211,7 +288,7 @@ export default function WardrobeSanctum() {
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-black select-none text-stone-200 font-sans flex items-center justify-center">
       
-      {/* Top Floating Header */}
+      {/* Top Floating Atelier Bar */}
       <header className="absolute top-3 left-0 right-0 z-40 flex items-center justify-between px-6 pointer-events-auto">
         <Link
           href="/"
@@ -247,7 +324,6 @@ export default function WardrobeSanctum() {
           className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
         />
 
-        {/* Live Rain, Crows & Lucky the Cat Canvas */}
         <canvas
           ref={canvasRef}
           width={1920}
