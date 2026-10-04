@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import LuckyCat from './LuckyCat';
 import { ArrowLeft, Lock, Unlock, Sparkles, Check, Key, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -570,6 +571,7 @@ export default function WardrobeSanctum() {
         />
 
         {/* Live Rain, Crows & Lucky the Cat Canvas */}
+        <LuckyCat />
         <canvas
           ref={canvasRef}
           width={1920}
